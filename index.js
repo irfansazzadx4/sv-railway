@@ -5,7 +5,7 @@
  * ✅ Fast reply (markRead AFTER processing)
  * ✅ PDF upload → API extract → HTML build → PDF → WhatsApp
  * ✅ Per-user custom card price (না থাকলে global default price)
- * ✅ Admin panel থেকে সব active user কে broadcast  message
+ * ✅ Admin panel থেকে সব active user কে broadcast message
  */
 
 const express  = require("express");
