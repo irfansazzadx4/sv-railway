@@ -1055,11 +1055,17 @@ function buildHTMLv3(d) {
 </html>`;
 }
 
+// ── V4: Version 1 Layout (Customized as per request) ──
 function buildHTMLv4(d) {
+  const presentAddr   = (d.presentAddress  || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
+  const permanentAddr = (d.permanentAddress || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
   const qrData = encodeURIComponent(`${d.nameEnglish} ${d.nid} ${d.dob}`);
 
-  // রক্তের গ্রুপ খালি বা '-' থাকলে যেন '-' দেখা না যায়
-  const bloodText = (d.bloodGroup && d.bloodGroup !== "-") ? d.bloodGroup : "";
+  // রক্তের গ্রুপ খালি, N/A বা '-' থাকলে যেন কিছু না দেখায়
+  let bloodText = d.bloodGroup || "";
+  if (bloodText === "-" || bloodText === "N/A" || bloodText.trim() === "") {
+    bloodText = "";
+  }
 
   return `<!DOCTYPE html>
 <html lang="bn">
@@ -1067,96 +1073,134 @@ function buildHTMLv4(d) {
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>${d.nid} - ${d.nameEnglish}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <link href="https://fonts.maateen.me/solaiman-lipi/font.css" rel="stylesheet">
+    <link href="https://surokkha.gov.bd/favicon.png" rel="icon">
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.1.1/css/all.css">
     <style>
-        @media print {
-            html, body { height:80%; margin: 0 !important; padding: 0 !important; overflow: hidden; }
+        @import url('https://fonts.maateen.me/solaiman-lipi/font.css');
+        @page { size: A4; margin: 0; }
+        body {
+            margin: 0;
+            font-family: 'Solaimanlipi', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 10vh;
+            background-color: #f0f0f0;
         }
-        body { margin: 0; padding: 0; text-align: center; background-color: #ffffff; }
-        .background { position: relative; width: 1241px; height: 1755px; margin: 0 auto; }
-        .crane { width: 1241px; height: 1755px; }
+        .printable-container {
+            width: 750px;
+            height: 1000px;
+            position: relative;
+            box-shadow: 0;
+            margin: 10px 0;
+            flex-shrink: 0;
+            background-color: lightgrey;
+        }
+        .background { position: relative; width: 100%; height: 100%; }
+        .crane { max-width: 100%; height: 100%; }
+        @media print {
+            html, body {
+                width: 210mm !important;
+                height: 297mm !important;
+                background-color: #ffffff !important;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            .no-print { display: none !important; }
+            @page { margin-top: 0mm; margin-bottom: 0mm; }
+            .printable-container {
+                width: 205mm;
+                height: 295mm;
+                page-break-after: avoid;
+                margin: 0mm;
+                overflow: hidden;
+            }
+            .crane { width: 100%; height: 100%; display: block; }
+        }
     </style>
 </head>
-<body>
-    <div class="background">
-        <img class="crane" src="https://dakhila-ldtax-gov-bd.rf.gd/assets/images/QR_Unofficial.png" height="1755" width="1241" onerror="this.onerror=null; this.src='http://onlinebd.duckdns.org/assets/images/QR_Unofficial.png';">
+<body style="text-align: center;">
+    <div class="printable-container">
+        <img class="crane" src="https://dakhila-ldtax-gov-bd.rf.gd/assets/images/server_unofficialV1.jpg" height="1000px" width="750px" onerror="this.onerror=null; this.src='http://onlinebd.duckdns.org/assets/images/server_unofficialV1.jpg';">
 
-        <div style="position: absolute; left: 30%; top: 8%; width: auto; font-size: 16px; color: rgb(255, 224, 0);"><b>National Identity Registration Wing (NIDW)</b></div>
+        <div style="position: absolute; left: 30%; top: 8%; width: auto; font-size: 16px; color: rgb(255 224 0);"><b>National Identity Registration Wing (NIDW)</b></div>
         <div style="position: absolute; left: 37%; top: 11%; width: auto; font-size: 14px; color: rgb(255, 47, 161);"><b>Select Your Search Category</b></div>
         <div style="position: absolute; left: 45%; top: 12.8%; width: auto; font-size: 12px; color: rgb(8, 121, 4);">Search By NID / Voter No.</div>
         <div style="position: absolute; left: 45%; top: 14.3%; width: auto; font-size: 12px; color: rgb(7, 119, 184);">Search By Form No.</div>
         <div style="position: absolute; left: 30%; top: 16.9%; width: auto; font-size: 12px; color: rgb(252, 0, 0);"><b>NID or Voter No*</b></div>
         <div style="position: absolute; left: 45%; top: 16.9%; width: auto; font-size: 12px; color: rgb(143, 143, 143);">${d.nid || ''}</div>
-        <div style="position: absolute; left: 62.9%; top: 17.1%; width: auto; font-size: 11px; color: rgb(255, 255, 255);">Submit</div>
+        <div style="position: absolute; left: 62.9%; top: 17.1%; width: auto; font-size: 11px; color: rgb(255 255 255);">Submit</div>
         <div style="position: absolute; left: 89%; top: 11.55%; width: auto; font-size: 11px; color: #fff;">Home</div>
 
-        <div style="position: absolute; left: 37.5%; top: 27.2%; width: auto; font-size: 16px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>জাতীয় পরিচিতি তথ্য</b></div>
-        <div style="position: absolute; left: 37.3%; top: 30%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">জাতীয় পরিচয় পত্র নম্বর</div>
-        <div style="position: absolute; left: 55%; top: 30%; width: auto; font-size: 14px; color: rgb(7, 7, 7);">${d.nid || ''}</div>
+        <div style="position: absolute; left: 37%; top: 27%; font-size: 17px;"><b>জাতীয় পরিচিতি তথ্য</b></div>
+        <div style="position: absolute; left: 37%; top: 29.7%; font-size: 14px;">জাতীয় পরিচয় পত্র নম্বর</div>
+        <div style="position: absolute; left: 55%; top: 29.7%; font-size: 14px;">${d.nid || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 32.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">পিন নম্বর</div>
-        <div style="position: absolute; left: 55%; top: 32.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7);">${d.pin || ''}</div>
+        <div style="position: absolute; left: 37%; top: 32.5%; font-size: 14px;">পিন নম্বর</div>
+        <div style="position: absolute; left: 55%; top: 32.5%; font-size: 14px;">${d.pin || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 35.3%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">পূর্ববর্তী এনআইডি নম্বর</div>
-        <div style="position: absolute; left: 55%; top: 35.3%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.oldNid || ''}</div>
+        <div style="position: absolute; left: 37%; top: 35%; font-size: 14px;">ফরম নাম্বার</div>
+        <div style="position: absolute; left: 55%; top: 35%; font-size: 14px;">${d.oldNid || ''}</div>
 
-        <!-- ✅ ১. ভোটার নম্বর এর জায়গায় উপজেলা কোড -->
-        <div style="position: absolute; left: 37.3%; top: 37.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">উপজেলা কোড</div>
-        <div style="position: absolute; left: 55%; top: 37.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.upazilaCode || ''}</div>
+        <!-- ✅ ১. ভোটার নাম্বার এর জায়গায় উপজেলা কোড -->
+        <div style="position: absolute; left: 37%; top: 37.5%; font-size: 14px;">উপজেলা কোড</div>
+        <div style="position: absolute; left: 55%; top: 37.5%; font-size: 14px;">${d.upazilaCode || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 40.5%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">ভোটার এলাকা</div>
-        <div style="position: absolute; left: 55%; top: 40.5%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.voterArea || ''}</div>
+        <div style="position: absolute; left: 37%; top: 40.2%; font-size: 14px;">ভোটার এলাকা</div>
+        <div style="position: absolute; left: 55%; top: 40.2%; font-size: 14px;">${d.voterArea || ''}</div>
 
-        <div style="position: absolute; left: 37.5%; top: 43.3%; width: auto; font-size: 16px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>ব্যক্তিগত তথ্য</b></div>
-        <div style="position: absolute; left: 37.3%; top: 46%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">নাম (বাংলা)</div>
-        <div style="position: absolute; font-weight: bold; left: 55%; top: 46%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>${d.nameBangla || ''}</b></div>
+        <div style="position: absolute; left: 37%; top: 43%; font-size: 17px;"><b>ব্যক্তিগত তথ্য</b></div>
+        <div style="position: absolute; left: 37%; top: 45.6%; font-size: 14px;">নাম (বাংলা)</div>
+        <div style="position: absolute; left: 55%; top: 45.6%; font-size: 14px;"><b>${d.nameBangla || ''}</b></div>
 
-        <div style="position: absolute; left: 37.3%; top: 48.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">নাম (ইংরেজি)</div>
-        <div style="position: absolute; left: 55%; top: 48.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7);">${d.nameEnglish || ''}</div>
+        <div style="position: absolute; left: 37%; top: 48.5%; font-size: 14px;">নাম (ইংরেজি)</div>
+        <div style="position: absolute; left: 55%; top: 48.5%; font-size: 14px;">${d.nameEnglish || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 51.5%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">জন্ম তারিখ</div>
-        <div style="position: absolute; left: 55%; top: 51.5%; width: auto; font-size: 14px; color: rgb(7, 7, 7);">${d.dob || ''}</div>
+        <div style="position: absolute; left: 37%; top: 51%; font-size: 14px;">জন্ম তারিখ</div>
+        <div style="position: absolute; left: 55%; top: 51%; font-size: 14px;">${d.dob || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 54.1%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">পিতার নাম</div>
-        <div style="position: absolute; left: 55%; top: 54.1%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.father || ''}</div>
+        <div style="position: absolute; left: 37%; top: 53.7%; font-size: 14px;">পিতার নাম</div>
+        <div style="position: absolute; left: 55%; top: 53.7%; font-size: 14px;">${d.father || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 56.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">মাতার নাম</div>
-        <div style="position: absolute; left: 55%; top: 56.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.mother || ''}</div>
+        <div style="position: absolute; left: 37%; top: 56.2%; font-size: 14px;">মাতার নাম</div>
+        <div style="position: absolute; left: 55%; top: 56.2%; font-size: 14px;">${d.mother || ''}</div>
 
         <!-- ✅ ২. স্বামী/স্ত্রীর নাম এর জায়গায় রক্তের গ্রুপ (খালি থাকলে '-' আসবে না) -->
-        <div style="position: absolute; left: 37.3%; top: 59.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">রক্তের গ্রুপ</div>
-        <div style="position: absolute; left: 55%; top: 59.2%; width: auto; font-size: 14px; color: red; font-family: 'SolaimanLipi', sans-serif;">${bloodText}</div>
+        <div style="position: absolute; left: 37%; top: 59%; font-size: 14px;">রক্তের গ্রুপ</div>
+        <div style="position: absolute; left: 55%; top: 59%; font-size: 14px; color: rgb(252, 0, 0);">${bloodText}</div>
 
-        <div style="position: absolute; left: 37.5%; top: 62%; width: auto; font-size: 16px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>অন্যান্য তথ্য</b></div>
-        <div style="position: absolute; left: 37.3%; top: 65.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">পেশা</div>
-        <div style="position: absolute; left: 55%; top: 65.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.occupation || ''}</div>
+        <div style="position: absolute; left: 37%; top: 61.8%; font-size: 17px;"><b>অন্যান্য তথ্য</b></div>
 
-        <div style="position: absolute; left: 37.3%; top: 68%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">লিঙ্গ</div>
-        <div style="position: absolute; left: 55%; top: 68%; width: auto; font-size: 17px; color: rgb(7, 7, 7);">${d.gender || ''}</div>
+        <div style="position: absolute; left: 37%; top: 65%; font-size: 14px;">লিঙ্গ</div>
+        <div style="position: absolute; left: 55%; top: 65%; font-size: 14px;">${d.gender || ''}</div>
+
+        <div style="position: absolute; left: 37%; top: 67.6%; font-size: 14px;">জন্মস্থান</div>
+        <div style="position: absolute; left: 55%; top: 67.6%; font-size: 14px;">${d.birthPlace || ''}</div>
 
         <!-- ✅ ৩. রক্তের গ্রুপ এর জায়গায় শিক্ষাগত যোগ্যতা -->
-        <div style="position: absolute; left: 37.3%; top: 70.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">শিক্ষাগত যোগ্যতা</div>
-        <div style="position: absolute; left: 55%; top: 70.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.education || ''}</div>
+        <div style="position: absolute; left: 37%; top: 70.3%; font-size: 14px;">শিক্ষাগত যোগ্যতা</div>
+        <div style="position: absolute; left: 55%; top: 70.3%; font-size: 14px;">${d.education || ''}</div>
 
-        <div style="position: absolute; left: 37.3%; top: 73.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">জন্মস্থান</div>
-        <div style="position: absolute; left: 55%; top: 73.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.birthPlace || ''}</div>
+        <div style="position: absolute; left: 37%; top: 72.8%; font-size: 14px;">পেশা</div>
+        <div style="position: absolute; left: 55%; top: 72.8%; font-size: 14px;">${d.occupation || ''}</div>
 
-        <div style="position: absolute; left: 37.5%; top: 75.8%; width: auto; font-size: 16px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>বর্তমান ঠিকানা</b></div>
-        <div style="position: absolute; left: 37%; top: 78.2%; width: 48%; font-size: 12.5px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${(d.presentAddress || '').replace(/\n/g, '<br>')}</div>
+        <div style="position: absolute; left: 37%; top: 75.6%; font-size: 17px;"><b>বর্তমান ঠিকানা</b></div>
+        <div style="position: absolute; left: 37%; top: 78.3%; width: 48%; font-size: 13px; text-align: left; white-space: normal;">${presentAddr}</div>
 
-        <div style="position: absolute; left: 37.5%; top: 84.6%; width: auto; font-size: 16px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>স্থায়ী ঠিকানা</b></div>
-        <div style="position: absolute; left: 37%; top: 87.3%; width: 48%; font-size: 12.5px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${(d.permanentAddress || '').replace(/\n/g, '<br>')}</div>
+        <div style="position: absolute; left: 37%; top: 84.4%; font-size: 17px;"><b>স্থায়ী ঠিকানা</b></div>
+        <div style="position: absolute; left: 37%; top: 87.3%; width: 48%; font-size: 13px; text-align: left; white-space: normal;">${permanentAddr}</div>
 
-        <div style="position: absolute; top: 94%; width: 100%; font-size: 12px; text-align: center; color: rgb(255, 0, 0); font-family: 'SolaimanLipi', sans-serif;">উপরে প্রদর্শিত তথ্যসমূহ জাতীয় পরিচয়পত্র সংশ্লিষ্ট, ভোটার তালিকার সাথে সরাসরি সম্পর্কযুক্ত নয়।</div>
-        <div style="position: absolute; top: 95.5%; width: 100%; text-align: center; font-size: 12px; color: rgb(3, 3, 3);">This is Software Generated Report From Bangladesh Election Commission, Signature &amp; Seal Aren't Required.</div>
+        <div style="position: absolute; top: 94.8%; width: 100%; font-size: 14px; text-align: center; color: rgb(255, 0, 0);">উপরে প্রদর্শিত তথ্যসমূহ জাতীয় পরিচয়পত্র সংশ্লিষ্ট, ভোটার তালিকার সাথে সরাসরি সম্পর্কযুক্ত নয়।</div>
+        <div style="position: absolute; top: 96.5%; width: 100%; text-align: center; font-size: 12px; color: rgb(3, 3, 3);">This is Software Generated Report From Bangladesh Election Commission, Signature &amp; Seal Aren't Required.</div>
 
-        <div style="position: absolute; left: 16%; top: 25.7%;">
-            <img src="${d.photo}" height="140px" width="121px" style="border-radius: 10px" onerror="this.onerror=null; this.src='https://dakhila-ldtax-gov-bd.rf.gd/assets/media/card/blank.png';">
+        <div style="position: absolute; left: 16%; top: 25.8%;">
+            <img src="${d.photo}" height="140px" width="121px" style="border-radius: 10px;" onerror="this.onerror=null; this.src='https://dakhila-ldtax-gov-bd.rf.gd/assets/media/card/blank.png';">
         </div>
 
-        <div style="position: absolute; left: 18.5%; top: 43%;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&amp;data=${qrData}" height="85px" width="85px">
+        <div style="position: absolute; left: 17.7%; top: 44.2%;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}" height="95px" width="95px">
         </div>
 
         <div style="position: absolute; display: flex; font-weight: bold; left: 15.5%; top: 39.8%; height: 32px; width: 130px; font-size: 13px; color: rgb(7, 7, 7); margin: auto; align-items: center;" align="center">
@@ -1277,12 +1321,14 @@ async function handleIncoming(msg, contact) {
     const text    = rawText.toLowerCase();
 
     // ── .sv / .sv off command ──
+// ── .sv / .sv off command (Auto set V4 on .sv) ──
     if (text === ".sv" || text === "/sv") {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
       setUserServiceMode(from, "sv");
+      setUserDefaultVersion(from, 4); // ✅ Auto select Version 4
       return sendText(from,
-        "✅ *SV Service Activated!*\n\nএখন থেকে সরাসরি NID ও DOB পাঠালেই কার্ড তৈরি হবে।\n\nউদাহরণ:\n1234567890 1990-01-01\n\nবন্ধ করতে পাঠান: *.sv off*"
+        "✅ *SV Service Activated! (Default Layout: V4)*\n\nএখন থেকে সরাসরি NID ও DOB পাঠালেই Version 4 কার্ড তৈরি হবে।\n\nউদাহরণ:\n`1234567890 1990-01-01`\n\nবন্ধ করতে পাঠান: *.sv off*"
       );
     }
 
@@ -1293,6 +1339,42 @@ async function handleIncoming(msg, contact) {
       return sendText(from,
         "🔄 *SV Service বন্ধ করা হয়েছে!* এখন থেকে সাধারণ PDF অপশন চালু হলো।"
       );
+    }
+
+    // ── Short Version Commands (.v1, .v2, .v3, .v4, .v0 / .v off) ──
+    if (text === ".v1" || text === "/v1") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      setUserDefaultVersion(from, 1);
+      return sendText(from, "✅ Default version *V1* সেট হয়েছে!");
+    }
+
+    if (text === ".v2" || text === "/v2") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      setUserDefaultVersion(from, 2);
+      return sendText(from, "✅ Default version *V2* সেট হয়েছে!");
+    }
+
+    if (text === ".v3" || text === "/v3") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      setUserDefaultVersion(from, 3);
+      return sendText(from, "✅ Default version *V3* সেট হয়েছে!");
+    }
+
+    if (text === ".v4" || text === "/v4") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      setUserDefaultVersion(from, 4);
+      return sendText(from, "✅ Default version *V4* সেট হয়েছে!");
+    }
+
+    if (text === ".v0" || text === "/v0" || text === ".v off" || text === "/v off") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      setUserDefaultVersion(from, 0);
+      return sendText(from, "✅ Default version *বন্ধ* হয়েছে! এখন প্রতিবার choice দেখাবে।");
     }
 
     // ── SV Mode: NID DOB auto-detection ──
