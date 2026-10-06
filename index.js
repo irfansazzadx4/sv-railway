@@ -452,12 +452,13 @@ async function extractNIDFromPDF(buffer) {
   }
 }
 
-// ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
+// ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
 async function fetchNIDFromSVApi(nid, dob) {
   const url = `https://onlinebd.duckdns.org/api_check.php?key=030c9b9015d4e47a199c92&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
-  const res = await axios.get(url, { timeout: 30000 });
+  
+  // ✅ Timeout 3 min (180,000ms) kora hoyeche jeno API slow holeo bot wait kore
+  const res = await axios.get(url, { timeout: 180000 });
 
-  // API response: { success: true, "data-Info": {...} }
   const raw = res.data;
   if (!raw || raw.success === false) {
     throw new Error(raw?.message || raw?.error || "SV API থেকে data পাওয়া যায়নি।");
@@ -465,7 +466,21 @@ async function fetchNIDFromSVApi(nid, dob) {
 
   const d = raw["data-Info"] || raw.data || raw;
 
-  // API field → standard bot data object mapping
+  // ✅ Address Extraction Logic (String or Object handle korbe)
+  let presentAddr = "";
+  if (typeof d.preAddress === "string") presentAddr = d.preAddress;
+  else if (d.preAddress?.addressLine) presentAddr = d.preAddress.addressLine;
+  else if (d.preAddress?.address) presentAddr = d.preAddress.address;
+  else if (typeof d.presentAddress === "string") presentAddr = d.presentAddress;
+  else if (d.presentAddress?.addressLine) presentAddr = d.presentAddress.addressLine;
+
+  let permanentAddr = "";
+  if (typeof d.perAddress === "string") permanentAddr = d.perAddress;
+  else if (d.perAddress?.addressLine) permanentAddr = d.perAddress.addressLine;
+  else if (d.perAddress?.address) permanentAddr = d.perAddress.address;
+  else if (typeof d.permanentAddress === "string") permanentAddr = d.permanentAddress;
+  else if (d.permanentAddress?.addressLine) permanentAddr = d.permanentAddress.addressLine;
+
   return {
     nid:              d.nationalId  || d.nid          || nid,
     pin:              d.pin         || "",
@@ -489,14 +504,8 @@ async function fetchNIDFromSVApi(nid, dob) {
     fatherNID:        d.fatherNID   || "N/A",
     motherNID:        d.motherNID   || "N/A",
     slNo:             d.slNo        || "",
-    presentAddress:
-      typeof d.preAddress === "string" ? d.preAddress :
-      typeof d.presentAddress === "string" ? d.presentAddress :
-      (d.presentAddress?.addressLine || ""),
-    permanentAddress:
-      typeof d.perAddress === "string" ? d.perAddress :
-      typeof d.permanentAddress === "string" ? d.permanentAddress :
-      (d.permanentAddress?.addressLine || ""),
+    presentAddress:   presentAddr,
+    permanentAddress: permanentAddr,
     photo:            d.photo       || d.userIMG        || d.imageUrl12 || "",
     dateOfToday:      new Date().toLocaleDateString("bn-BD", {
       year: "numeric", month: "long", day: "numeric"
