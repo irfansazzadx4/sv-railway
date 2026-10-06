@@ -1,7 +1,7 @@
 /**
  * NID Service Bot — WhatsApp Cloud API
  * ✅ Self-built HTML (no PHP dependency)
- * ✅ Default version per user (.v1 / .v2 / .v3 / .v4 / .v0)
+ * ✅ Default version per user (.setversion v1/v2/v3)
  * ✅ Fast reply (markRead AFTER processing)
  * ✅ PDF upload → API extract → HTML build → PDF → WhatsApp
  * ✅ Per-user custom card price (না থাকলে global default price)
@@ -113,7 +113,7 @@ function setUserServiceMode(number, mode) {
   return false;
 }
 
-// ✅ প্রতিটা user এর জন্য নিজস্ব card price (না থাকলে global default price)
+// ✅ NEW: প্রতিটা user এর জন্য নিজস্ব card price (না থাকলে global default price)
 function getCardPriceForUser(number) {
   const u = getUser(number);
   if (u && u.price !== undefined && u.price !== null && u.price !== "") return u.price;
@@ -122,7 +122,7 @@ function getCardPriceForUser(number) {
 
 function deductBalance(number) {
   const users = getUsers();
-  const price = getCardPriceForUser(number);
+  const price = getCardPriceForUser(number); // ✅ per-user price ব্যবহার হচ্ছে
   if (price === 0) return true;
   const idx = users.findIndex(x => normalizeNumber(x.number) === normalizeNumber(number));
   if (idx === -1) return false;
@@ -149,25 +149,6 @@ function toBn(num) {
     '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
   };
   return digits.replace(/[0-9]/g, d => bnDigits[d]);
-}
-
-// ✅ Date Normalizer: যেকোনো তারিখ ফরম্যাটকে YYYY-MM-DD ফরম্যাটে নিবে
-function normalizeDate(dobStr) {
-  if (!dobStr) return "";
-  const cleaned = dobStr.trim().replace(/[/.]/g, "-");
-  const parts = cleaned.split("-");
-
-  if (parts.length === 3) {
-    // DD-MM-YYYY -> YYYY-MM-DD
-    if (parts[0].length === 2 && parts[2].length === 4) {
-      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-    }
-    // YYYY-MM-DD
-    if (parts[0].length === 4) {
-      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-    }
-  }
-  return cleaned;
 }
 
 // ─────────────────────── PENDING STATE ────────────────────────
@@ -272,7 +253,7 @@ async function markRead(messageId) {
 async function sendVersionChoice(to, nidName, nidNumber, currentDefault) {
   const defaultInfo = currentDefault > 0
     ? `\n\n⚙️ আপনার default: V${currentDefault} (শুধু V${currentDefault} পেতে কিছু না লিখলেও হবে)`
-    : `\n\n💡 Tip: *.v1* দিলে পরে automatically V1 তৈরি হবে`;
+    : `\n\n💡 Tip: *.setversion v1* দিলে পরে automatically V1 তৈরি হবে`;
 
   try {
     await axios.post(`${WA_BASE()}/messages`, {
@@ -340,26 +321,91 @@ function mapAPIData(d) {
   return {
     nid: d.nationalId || d.nid || d.NID || d.national_id || "",
     pin: d.pin || "",
-    oldNid: d.formNo || d.form_number || d.oldNid || d.old_nid || "",
-    nameBangla: d.nameBn || d.nameBangla || d.name_bn || "",
-    nameEnglish: d.nameEn || d.nameEnglish || d.name_en || "",
-    dob: d.dateOfBirth || d.dob || "",
-    father: d.father || d.fatherName || d.father_name || "",
-    mother: d.mother || d.motherName || d.mother_name || "",
-    spouse: d.spouse || d.spouseName || "N/A",
-    gender: d.gender || "",
-    religion: d.religion || "",
-    birthPlace: d.birthPlace || d.birth_place || "",
-    bloodGroup: d.bloodGroup || d.blood_group || "N/A",
-    occupation: d.occupation || "N/A",
-    education: d.education || "N/A",
-    voterArea: d.voterArea || d.voter_area || d.voterAreaName || "",
-    voterNo: d.voterNo || d.voter_no || "",
-    voterAreaCode: d.voterAreaCode || d.voter_area_code || "",
-    slNo: d.slNo || d.sl_no || "",
-    upazilaCode: d.upazilaCode || d.upazila_code || "",
-    fatherNID: d.nidFather || d.fatherNID || d.father_nid || "N/A",
-    motherNID: d.nidMother || d.motherNID || d.mother_nid || "N/A",
+    oldNid:
+      d.formNo ||
+      d.form_number ||
+      d.oldNid ||
+      d.old_nid ||
+      "",
+    nameBangla:
+      d.nameBn ||
+      d.nameBangla ||
+      d.name_bn ||
+      "",
+    nameEnglish:
+      d.nameEn ||
+      d.nameEnglish ||
+      d.name_en ||
+      "",
+    dob:
+      d.dateOfBirth ||
+      d.dob ||
+      "",
+    father:
+      d.father ||
+      d.fatherName ||
+      d.father_name ||
+      "",
+    mother:
+      d.mother ||
+      d.motherName ||
+      d.mother_name ||
+      "",
+    spouse:
+      d.spouse ||
+      d.spouseName ||
+      "N/A",
+    gender:
+      d.gender ||
+      "",
+    religion:
+      d.religion ||
+      "",
+    birthPlace:
+      d.birthPlace ||
+      d.birth_place ||
+      "",
+    bloodGroup:
+      d.bloodGroup ||
+      d.blood_group ||
+      "N/A",
+    occupation:
+      d.occupation ||
+      "N/A",
+    education:
+      d.education ||
+      "N/A",
+    voterArea:
+      d.voterArea ||
+      d.voter_area ||
+      d.voterAreaName ||
+      "",
+    voterNo:
+      d.voterNo ||
+      d.voter_no ||
+      "",
+    voterAreaCode:
+      d.voterAreaCode ||
+      d.voter_area_code ||
+      "",
+    slNo:
+      d.slNo ||
+      d.sl_no ||
+      "",
+    upazilaCode:
+      d.upazilaCode ||
+      d.upazila_code ||
+      "",
+    fatherNID:
+      d.nidFather ||
+      d.fatherNID ||
+      d.father_nid ||
+      "N/A",
+    motherNID:
+      d.nidMother ||
+      d.motherNID ||
+      d.mother_nid ||
+      "N/A",
     presentAddress:
       typeof d.presentAddress === "string"
         ? d.presentAddress
@@ -368,7 +414,11 @@ function mapAPIData(d) {
       typeof d.permanentAddress === "string"
         ? d.permanentAddress
         : (d.permanentAddress?.addressLine || d.permanentAddress?.address || ""),
-    photo: d.photo || d.userIMG || d.imageUrl12 || "",
+    photo:
+      d.photo ||
+      d.userIMG ||
+      d.imageUrl12 ||
+      "",
     dateOfToday:
       d.dateOfToday ||
       new Date().toLocaleDateString("bn-BD", {
@@ -416,7 +466,7 @@ async function fetchNIDFromSVApi(nid, dob) {
 
   const d = raw["data-Info"] || raw.data || raw;
 
-  // ✅ Address Extraction Logic
+  // ✅ Address Extraction Logic (String বা Object থেকে সঠিক ঠিকানা বের করা)
   let presentAddr = "";
   if (typeof d.preAddress === "string") presentAddr = d.preAddress;
   else if (d.preAddress?.addressLine) presentAddr = d.preAddress.addressLine;
@@ -431,7 +481,7 @@ async function fetchNIDFromSVApi(nid, dob) {
   else if (typeof d.permanentAddress === "string") permanentAddr = d.permanentAddress;
   else if (d.permanentAddress?.addressLine) permanentAddr = d.permanentAddress.addressLine;
 
-  // ✅ রক্তের গ্রুপ ফাঁকা বা '-' থাকলে খালি রাখার Logic
+  // ✅ রক্তের গ্রুপ ফাঁকা বা '-' থাকলে খালি রাখার জন্য Logic
   let blood = d.bloodGroup || d.blood_group || "";
   if (blood === "-" || blood === "N/A" || blood.trim() === "") {
     blood = "";
@@ -507,6 +557,24 @@ function buildHTMLv1(d) {
         }
         .background { position: relative; width: 100%; height: 100%; }
         .crane { max-width: 100%; height: 100%; }
+        #print-pdf-btn {
+            background: linear-gradient(45deg, #FF5722, #FF9800);
+            padding: 10px 20px;
+            width: auto;
+            height: auto;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.2);
+            color: #fff;
+            border-radius: 25px;
+            margin: 25px;
+            display: block;
+            text-transform: uppercase;
+            transition: all 0.3s ease-in-out;
+            letter-spacing: 1px;
+        }
         @media print {
             html, body {
                 width: 210mm !important;
@@ -617,7 +685,7 @@ function buildHTMLv1(d) {
 </html>`;
 }
 
-// ── V2 ──
+// ── V2: PHP signToServerV2 এর exact structure ──
 function buildHTMLv2(d) {
   const A = CONFIG.ASSETS;
   const presentAddr   = (d.presentAddress  || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
@@ -797,7 +865,7 @@ function buildHTMLv2(d) {
 </html>`;
 }
 
-// ── V3 ──
+// ── V3: PHP signToServerV3 এর exact structure ──
 function buildHTMLv3(d) {
   const A = CONFIG.ASSETS;
   const presentAddr   = (d.presentAddress  || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
@@ -987,7 +1055,7 @@ function buildHTMLv3(d) {
 </html>`;
 }
 
-// ── V4: Version 1 Layout (Customized) ──
+// ── V4: Version 1 Layout (Customized as per request) ──
 function buildHTMLv4(d) {
   const presentAddr   = (d.presentAddress  || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
   const permanentAddr = (d.permanentAddress || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
@@ -1152,6 +1220,8 @@ function buildHTML(version, data) {
 }
 
 // ─────────────────── HTML → PDF CONVERTER ──────────────────────
+// Font embed এখন PDF server (pdf-server.js) এ হয়।
+// index.js থেকে plain HTML পাঠালেই হবে।
 async function convertHTMLtoPDF(html) {
   if (!CONFIG.PDF_API_URL) throw new Error("PDF_API_URL set করা নেই!");
 
@@ -1170,6 +1240,7 @@ async function convertHTMLtoPDF(html) {
     throw new Error("PDF server connect error: " + e.message);
   }
 
+  // ✅ arraybuffer → string → JSON parse
   let parsed;
   try {
     const raw = Buffer.from(res.data).toString("utf8");
@@ -1187,12 +1258,15 @@ async function convertHTMLtoPDF(html) {
     throw new Error("PDF base64 পাওয়া যায়নি");
   }
 
+  // ✅ Decode
   const buffer = Buffer.from(base64, "base64");
 
+  // ✅ Size check
   if (buffer.length !== parsed.size) {
-    console.warn(`⚠️ Size mismatch: got ${buffer.length}, expected${parsed.size}`);
+    console.warn(`⚠️ Size mismatch: got ${buffer.length}, expected ${parsed.size}`);
   }
 
+  // ✅ Header check
   const header = buffer.slice(0, 4).toString("ascii");
   if (header !== "%PDF") {
     throw new Error(`Invalid PDF header: "${header}"`);
@@ -1213,9 +1287,9 @@ async function processNIDCard(from, data, version, msgId) {
   backupData();
 
   const safeName = (data.nameEnglish || data.nameBangla || "NID").replace(/[/\\?%*:|"<>]/g, "").trim();
-  const filename  = `${data.nid \vert{}\vert{} Date.now()} -${safeName}.pdf`;
+  const filename  = `${data.nid || Date.now()} - ${safeName}.pdf`;
 
-  const price  = getCardPriceForUser(from);
+  const price  = getCardPriceForUser(from); // ✅ per-user price
   const defVer = getUserDefaultVersion(from);
 
   const captionLines = [
@@ -1225,7 +1299,7 @@ async function processNIDCard(from, data, version, msgId) {
     `🆔 NID: ${toBn(data.nid)}`,
     `🎂 DOB: ${data.dob}`,
     price > 0 ? `💰 Remaining: ${getUserBalance(from)} টাকা` : "",
-    defVer > 0 ? `⚙️ Default Version: V${defVer}` : "💡 .v1 দিলে পরে auto তৈরি হবে",
+    defVer > 0 ? `⚙️ Default Version: V${defVer}` : "💡 .setversion v1 দিলে পরে auto তৈরি হবে",
   ].filter(Boolean).join("\n");
 
   const mediaId = await uploadMedia(pdfBuffer, filename, "application/pdf");
@@ -1246,7 +1320,8 @@ async function handleIncoming(msg, contact) {
     const rawText = msg.text.body.trim();
     const text    = rawText.toLowerCase();
 
-    // ── SV Service Activation / Deactivation ──
+    // ── .sv / .sv off command ──
+// ── .sv / .sv off command (Auto set V4 on .sv) ──
     if (text === ".sv" || text === "/sv") {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
@@ -1302,39 +1377,64 @@ async function handleIncoming(msg, contact) {
       return sendText(from, "✅ Default version *বন্ধ* হয়েছে! এখন প্রতিবার choice দেখাবে।");
     }
 
-    // ── SV Mode: Auto-detect NID (10-17 digits) & DOB ──
-    if (getUserServiceMode(from) === "sv") {
-      const nidMatch = rawText.match(/\b\d{10,17}\b/);
-      const dobMatch = rawText.match(/\b(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{4})\b/);
+    // ── SV Mode: NID DOB auto-detection ──
+    // Format: "1234567890 1990-01-01" — দুটো space-separated part
+    const svMatch = rawText.trim().match(/^(\d{10,17})\s+([\d]{4}-[\d]{2}-[\d]{2}|\d{1,2}\s+\w+\s+\d{4}|\d{2}\/\d{2}\/\d{4})$/i);
+    if (svMatch && getUserServiceMode(from) === "sv") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
 
-      if (nidMatch && dobMatch) {
-        markRead(msgId);
-        if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      const nidInput = svMatch[1];
+      const dobInput = svMatch[2];
+      const price    = getCardPriceForUser(from);
 
-        const nidInput = nidMatch[0];
-        const dobInput = normalizeDate(dobMatch[0]); // ✅ অটোমেটিক YYYY-MM-DD হয়ে যাবে
-        const price    = getCardPriceForUser(from);
+      if (price > 0 && getUserBalance(from) < price) {
+        return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
+      }
 
-        if (price > 0 && getUserBalance(from) < price) {
-          return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
+      await sendText(from, "⏳ SV Service: NID তথ্য fetch হচ্ছে...");
+
+      try {
+        const data    = await fetchNIDFromSVApi(nidInput, dobInput);
+        const version = getUserDefaultVersion(from) || 4;
+
+        if (price > 0 && !deductBalance(from)) {
+          return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`);
         }
 
-        await sendText(from, "⏳ SV Service: NID তথ্য fetch হচ্ছে...");
+        return processNIDCard(from, data, version, null)
+          .catch(e => sendText(from, `❌ Error: ${e.message}`));
+      } catch (err) {
+        console.error("SV API error:", err.message);
+        return sendText(from, `❌ SV Error: ${err.message}\nআবার চেষ্টা করুন।`);
+      }
+    }
 
-        try {
-          const data    = await fetchNIDFromSVApi(nidInput, dobInput);
-          const version = getUserDefaultVersion(from) || 4;
-
-          if (price > 0 && !deductBalance(from)) {
-            return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`);
-          }
-
-          return processNIDCard(from, data, version, null)
-            .catch(e => sendText(from, `❌ Error: ${e.message}`));
-        } catch (err) {
-          console.error("SV API error:", err.message);
-          return sendText(from, `❌ SV Error: ${err.message}\nআবার চেষ্টা করুন।`);
-        }
+    if (text.startsWith(".setversion") || text.startsWith("setversion")) {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      const parts = text.split(/\s+/);
+      const arg   = parts[1] || "";
+      if (arg === "v1" || arg === "1") {
+        setUserDefaultVersion(from, 1);
+        return sendText(from, "✅ Default version *V1* সেট হয়েছে!\nএখন থেকে PDF পাঠালে automatically V1 কার্ড তৈরি হবে।\nChange করতে: *.setversion v2* বা *.setversion off*");
+      } else if (arg === "v2" || arg === "2") {
+        setUserDefaultVersion(from, 2);
+        return sendText(from, "✅ Default version *V2* সেট হয়েছে!\nChange করতে: *.setversion v1* বা *.setversion off*");
+      } else if (arg === "v3" || arg === "3") {
+        setUserDefaultVersion(from, 3);
+        return sendText(from, "✅ Default version *V3* সেট হয়েছে!\nChange করতে: *.setversion v1* বা *.setversion off*");
+      } else if (arg === "v4" || arg === "4") {
+        setUserDefaultVersion(from, 4);
+        return sendText(from, "✅ Default version *V4* সেট হয়েছে!\nChange করতে: *.setversion v1* বা *.setversion off*");
+      } else if (arg === "off" || arg === "0") {
+        setUserDefaultVersion(from, 0);
+        return sendText(from, "✅ Default version *বন্ধ* হয়েছে!\nএখন প্রতিবার PDF পাঠালে V1/V2/V3 choice দেখাবে।");
+      } else {
+        const cur = getUserDefaultVersion(from);
+        return sendText(from,
+          `⚙️ *Version সেটিং*\n\nআপনার current default: ${cur > 0 ? `V${cur}` : "বন্ধ (প্রতিবার choice দেখায়)"}\n\nChange করুন:\n• *.setversion v1* → সবসময় V1\n• *.setversion v2* → সবসময় V2\n• *.setversion v3* → সবসময় V3\n• *.setversion v4* → সবসময় V4\n• *.setversion off* → প্রতিবার choice দেখাবে`
+        );
       }
     }
 
@@ -1347,11 +1447,11 @@ async function handleIncoming(msg, contact) {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
       const bal    = getUserBalance(from);
-      const price  = getCardPriceForUser(from);
+      const price  = getCardPriceForUser(from); // ✅ per-user price
       const defVer = getUserDefaultVersion(from);
       const svMode = getUserServiceMode(from);
       return sendText(from,
-        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price: ${price} টাকা\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.v1 / .v2 / .v3 / .v4 / .v0*\nSV Mode: *.sv* / *.sv off*`
+        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price: ${price} টাকা\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*`
       );
     }
 
@@ -1360,9 +1460,9 @@ async function handleIncoming(msg, contact) {
       return sendText(from,
         `📋 *Commands*\n\n` +
         `📄 NID PDF পাঠান → কার্ড তৈরি\n` +
-        `⚙️ *.v1 / .v2 / .v3 / .v4* → default version সেট করুন\n` +
-        `⚙️ *.v0* → প্রতিবার choice দেখাবে\n` +
-        `🔧 *.sv* → SV Service চালু (NID+DOB দিয়ে কার্ড)\n` +
+        `⚙️ *.setversion v1/v2/v3/v4* → default version\n` +
+        `⚙️ *.setversion off* → প্রতিবার choice\n` +
+        `🔧 *.sv* → SV Service চালু (NID+DOB দিয়ে কার্ড)\n` +
         `🔧 *.sv off* → SV Service বন্ধ\n` +
         `📊 *.status* → balance ও settings\n` +
         `🏓 *.ping* → bot check`
@@ -1378,7 +1478,7 @@ async function handleIncoming(msg, contact) {
       const pending = getPending(from);
       if (!pending) { markRead(msgId); return sendText(from, "❌ কোনো PDF পাওয়া যায়নি। আগে PDF পাঠান।"); }
       if (!isAllowed(from)) { markRead(msgId); return sendText(from, "❌ আপনি authorized নন।"); }
-      const price = getCardPriceForUser(from);
+      const price = getCardPriceForUser(from); // ✅ per-user price
       if (price > 0 && !deductBalance(from)) { markRead(msgId); return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`); }
       return processNIDCard(from, pending.data, vMap[text], msgId)
         .catch(e => sendText(from, `❌ Error: ${e.message}`));
@@ -1397,7 +1497,7 @@ async function handleIncoming(msg, contact) {
     if (!pending) { markRead(msgId); return sendText(from, "❌ Expired! আবার PDF পাঠান।"); }
     if (!isAllowed(from)) { markRead(msgId); return sendText(from, "❌ আপনি authorized নন।"); }
 
-    const price = getCardPriceForUser(from);
+    const price = getCardPriceForUser(from); // ✅ per-user price
     if (price > 0 && !deductBalance(from)) {
       markRead(msgId);
       return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
@@ -1414,11 +1514,6 @@ async function handleIncoming(msg, contact) {
   if (msg.type === "document") {
     const doc = msg.document;
     markRead(msgId);
-
-    // 🛑 .sv চালু থাকলে PDF রীড করবে না
-    if (getUserServiceMode(from) === "sv") {
-      return sendText(from, "⚠️ আপনার বর্তমানে *SV Service* চালু রয়েছে।\n\nPDF ফাইল থেকে কার্ড বানাতে প্রথমে *.sv off* লিখে সার্ভিসটি বন্ধ করুন।");
-    }
 
     if (!doc.mime_type?.includes("pdf")) {
       return sendText(from, "❌ শুধু PDF file পাঠাতে হবে।");
@@ -1438,7 +1533,7 @@ async function handleIncoming(msg, contact) {
       }
 
       if (defVersion > 0) {
-        const price = getCardPriceForUser(from);
+        const price = getCardPriceForUser(from); // ✅ per-user price
         if (price > 0 && !deductBalance(from)) {
           return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`);
         }
@@ -1602,7 +1697,7 @@ app.get("/admin", adminAuth, (req, res) => {
     <div style="text-align:right"><a href="/admin/logout">Logout</a></div>
 
     <div class="card">
-      <h3>⚙️️ Settings</h3>
+      <h3>⚙️ Settings</h3>
       <form method="POST" action="/admin/settings">
         Default Card Price (৳): <input name="cardPrice" value="${settings.cardPrice||0}" style="width:80px" type="number"/>
         <button>Save</button>
@@ -1666,7 +1761,7 @@ app.post("/admin/add", adminAuth, (req, res) => {
       active: true,
       defaultVersion: parseInt(defaultVersion)||0,
     };
-    if (price !== undefined && price !== "") newUser.price = parseFloat(price);
+    if (price !== undefined && price !== "") newUser.price = parseFloat(price); // ✅ custom price (দিলে)
     users.push(newUser);
     saveUsers(users); backupData();
   }
@@ -1685,12 +1780,13 @@ app.post("/admin/recharge", adminAuth, (req, res) => {
   res.redirect("/admin");
 });
 
+// ✅ NEW: প্রতিটা user এর জন্য আলাদা price সেট/আপডেট/রিমুভ করার route
 app.post("/admin/setprice", adminAuth, (req, res) => {
   const users = getUsers();
   const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
   if (i !== -1) {
     const p = req.body.price;
-    if (p === "" || p === undefined) delete users[i].price;
+    if (p === "" || p === undefined) delete users[i].price; // খালি রেখে Set Price দিলে আবার default price এ ফিরে যাবে
     else users[i].price = parseFloat(p);
     saveUsers(users); backupData();
   }
@@ -1731,19 +1827,21 @@ app.post("/admin/backup", adminAuth, async (req, res) => {
   res.redirect("/admin");
 });
 
+// ✅ NEW: সব active user কে broadcast message পাঠানো
 app.post("/admin/broadcast", adminAuth, async (req, res) => {
   const message = (req.body.message || "").trim();
   if (!message) return res.redirect("/admin");
 
+  // সাথে সাথে admin panel কে response দিয়ে দিচ্ছি, ব্যাকগ্রাউন্ডে ধীরে ধীরে সবাইকে পাঠানো হবে
   res.redirect("/admin");
 
-  const users = getUsers().filter(u => u.active !== false);
+  const users = getUsers().filter(u => u.active !== false); // শুধু active user দের কাছে যাবে
   (async () => {
     let sent = 0;
     for (const u of users) {
       await sendText(normalizeNumber(u.number), message);
       sent++;
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 300)); // WhatsApp rate-limit এড়াতে ছোট গ্যাপ
     }
     console.log(`✅ Broadcast sent to ${sent}/${users.length} users`);
   })();
