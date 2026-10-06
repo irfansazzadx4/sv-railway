@@ -456,7 +456,7 @@ async function extractNIDFromPDF(buffer) {
 async function fetchNIDFromSVApi(nid, dob) {
   const url = `https://onlinebd.duckdns.org/api_check.php?key=030c9b9015d4e47a199c92&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
   
-  // ✅ Timeout 3 min (180,000ms) kora hoyeche jeno API slow holeo bot wait kore
+  // ✅ API slow হলেও যেন ৩ মিনিট (১৮০,০০০ মি.সে.) অপেক্ষা করে
   const res = await axios.get(url, { timeout: 180000 });
 
   const raw = res.data;
@@ -466,7 +466,7 @@ async function fetchNIDFromSVApi(nid, dob) {
 
   const d = raw["data-Info"] || raw.data || raw;
 
-  // ✅ Address Extraction Logic (String or Object handle korbe)
+  // ✅ Address Extraction Logic (String বা Object থেকে সঠিক ঠিকানা বের করা)
   let presentAddr = "";
   if (typeof d.preAddress === "string") presentAddr = d.preAddress;
   else if (d.preAddress?.addressLine) presentAddr = d.preAddress.addressLine;
@@ -481,6 +481,12 @@ async function fetchNIDFromSVApi(nid, dob) {
   else if (typeof d.permanentAddress === "string") permanentAddr = d.permanentAddress;
   else if (d.permanentAddress?.addressLine) permanentAddr = d.permanentAddress.addressLine;
 
+  // ✅ রক্তের গ্রুপ ফাঁকা বা '-' থাকলে খালি রাখার জন্য Logic
+  let blood = d.bloodGroup || d.blood_group || "";
+  if (blood === "-" || blood === "N/A" || blood.trim() === "") {
+    blood = "";
+  }
+
   return {
     nid:              d.nationalId  || d.nid          || nid,
     pin:              d.pin         || "",
@@ -490,19 +496,19 @@ async function fetchNIDFromSVApi(nid, dob) {
     dob:              d.dateOfBirth || d.dob            || dob,
     father:           d.fatherName  || d.father         || "",
     mother:           d.motherName  || d.mother         || "",
-    spouse:           d.spouseName  || d.spouse         || "N/A",
+    spouse:           d.spouseName  || d.spouse         || "",
     gender:           d.gender      || "",
     religion:         d.religion    || "",
     birthPlace:       d.birthPlace  || d.birth_place    || "",
-    bloodGroup:       d.bloodGroup  || d.blood_group    || "N/A",
-    occupation:       d.occupation  || "N/A",
-    education:        d.education   || "N/A",
+    bloodGroup:       blood,
+    occupation:       d.occupation  || "",
+    education:        d.education   || "",
     voterArea:        d.voterArea   || d.voter_area     || "",
     voterNo:          d.voterNo     || d.voter_no       || "",
     voterAreaCode:    d.voterAreaCode|| d.voter_area_code|| "",
     upazilaCode:      d.districtCode || d.upazilaCode   || "",
-    fatherNID:        d.fatherNID   || "N/A",
-    motherNID:        d.motherNID   || "N/A",
+    fatherNID:        d.fatherNID   || "",
+    motherNID:        d.motherNID   || "",
     slNo:             d.slNo        || "",
     presentAddress:   presentAddr,
     permanentAddress: permanentAddr,
@@ -1052,6 +1058,9 @@ function buildHTMLv3(d) {
 function buildHTMLv4(d) {
   const qrData = encodeURIComponent(`${d.nameEnglish} ${d.nid} ${d.dob}`);
 
+  // রক্তের গ্রুপ খালি বা '-' থাকলে যেন '-' দেখা না যায়
+  const bloodText = (d.bloodGroup && d.bloodGroup !== "-") ? d.bloodGroup : "";
+
   return `<!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -1092,6 +1101,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37.3%; top: 35.3%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">পূর্ববর্তী এনআইডি নম্বর</div>
         <div style="position: absolute; left: 55%; top: 35.3%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.oldNid || ''}</div>
 
+        <!-- ✅ ১. ভোটার নম্বর এর জায়গায় উপজেলা কোড -->
         <div style="position: absolute; left: 37.3%; top: 37.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">উপজেলা কোড</div>
         <div style="position: absolute; left: 55%; top: 37.8%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.upazilaCode || ''}</div>
 
@@ -1114,8 +1124,9 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37.3%; top: 56.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">মাতার নাম</div>
         <div style="position: absolute; left: 55%; top: 56.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.mother || ''}</div>
 
+        <!-- ✅ ২. স্বামী/স্ত্রীর নাম এর জায়গায় রক্তের গ্রুপ (খালি থাকলে '-' আসবে না) -->
         <div style="position: absolute; left: 37.3%; top: 59.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">রক্তের গ্রুপ</div>
-        <div style="position: absolute; left: 55%; top: 59.2%; width: auto; font-size: 14px; color: red; font-family: 'SolaimanLipi', sans-serif;">${d.bloodGroup || ''}</div>
+        <div style="position: absolute; left: 55%; top: 59.2%; width: auto; font-size: 14px; color: red; font-family: 'SolaimanLipi', sans-serif;">${bloodText}</div>
 
         <div style="position: absolute; left: 37.5%; top: 62%; width: auto; font-size: 16px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;"><b>অন্যান্য তথ্য</b></div>
         <div style="position: absolute; left: 37.3%; top: 65.2%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">পেশা</div>
@@ -1124,6 +1135,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37.3%; top: 68%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">লিঙ্গ</div>
         <div style="position: absolute; left: 55%; top: 68%; width: auto; font-size: 17px; color: rgb(7, 7, 7);">${d.gender || ''}</div>
 
+        <!-- ✅ ৩. রক্তের গ্রুপ এর জায়গায় শিক্ষাগত যোগ্যতা -->
         <div style="position: absolute; left: 37.3%; top: 70.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">শিক্ষাগত যোগ্যতা</div>
         <div style="position: absolute; left: 55%; top: 70.7%; width: auto; font-size: 14px; color: rgb(7, 7, 7); font-family: 'SolaimanLipi', sans-serif;">${d.education || ''}</div>
 
