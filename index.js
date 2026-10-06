@@ -454,7 +454,7 @@ async function extractNIDFromPDF(buffer) {
 
 // ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
 async function fetchNIDFromSVApi(nid, dob) {
-  const url = `https://onlinebd.duckdns.org/api_check.php?key=030c9b9015d4e47a199c92&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
+  const url = `https://all-api.top/sv.php?key=arthurx4&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
   
   // ✅ API slow হলেও যেন ৩ মিনিট (১৮০,০০০ মি.সে.) অপেক্ষা করে
   const res = await axios.get(url, { timeout: 180000 });
