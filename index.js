@@ -5,6 +5,7 @@
  * ✅ Fast reply (markRead AFTER processing)
  * ✅ PDF upload → API extract → HTML build → PDF → WhatsApp
  * ✅ Per-user custom card price (না থাকলে global default price)
+ * ✅ SV Service এর জন্য আলাদা price (per-user override + global default)
  * ✅ Admin panel থেকে সব active user কে broadcast message
  */
 
@@ -54,7 +55,8 @@ const getUsers    = () => loadJSON(USERS_FILE,    []);
 const saveUsers   = (u) => saveJSON(USERS_FILE,   u);
 const getStats    = () => loadJSON(STATS_FILE,    {});
 const saveStats   = (s) => saveJSON(STATS_FILE,   s);
-const getSettings = () => loadJSON(SETTINGS_FILE, { cardPrice: 0 });
+// ✅ svPrice যোগ হলো global settings এ
+const getSettings = () => loadJSON(SETTINGS_FILE, { cardPrice: 0, svPrice: 0 });
 const saveSettings= (s) => saveJSON(SETTINGS_FILE, s);
 
 function normalizeNumber(num) {
@@ -113,16 +115,29 @@ function setUserServiceMode(number, mode) {
   return false;
 }
 
-// ✅ NEW: প্রতিটা user এর জন্য নিজস্ব card price (না থাকলে global default price)
+// ✅ প্রতিটা user এর জন্য নিজস্ব PDF card price (না থাকলে global default price)
 function getCardPriceForUser(number) {
   const u = getUser(number);
   if (u && u.price !== undefined && u.price !== null && u.price !== "") return u.price;
   return getSettings().cardPrice || 0;
 }
 
-function deductBalance(number) {
+// ✅ NEW: SV service এর জন্য আলাদা price (per-user override, না থাকলে global default svPrice)
+function getSVPriceForUser(number) {
+  const u = getUser(number);
+  if (u && u.svPrice !== undefined && u.svPrice !== null && u.svPrice !== "") return u.svPrice;
+  return getSettings().svPrice || 0;
+}
+
+// ✅ NEW: mode অনুযায়ী সঠিক price রিটার্ন করবে ("pdf" বা "sv")
+function getPriceForUser(number, mode = "pdf") {
+  return mode === "sv" ? getSVPriceForUser(number) : getCardPriceForUser(number);
+}
+
+// ✅ UPDATED: mode-aware deduct — PDF আর SV আলাদাভাবে balance কাটবে
+function deductBalance(number, mode = "pdf") {
   const users = getUsers();
-  const price = getCardPriceForUser(number); // ✅ per-user price ব্যবহার হচ্ছে
+  const price = getPriceForUser(number, mode);
   if (price === 0) return true;
   const idx = users.findIndex(x => normalizeNumber(x.number) === normalizeNumber(number));
   if (idx === -1) return false;
@@ -452,9 +467,9 @@ async function extractNIDFromPDF(buffer) {
   }
 }
 
-// ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
+// ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
 async function fetchNIDFromSVApi(nid, dob) {
-  const url = `https://all-api.top/sv.php?key=arthurx4&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
+  const url = `https://onlinebd.duckdns.org/api_check.php?key=030c9b9015d4e47a199c92&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
   
   // ✅ API slow হলেও যেন ৩ মিনিট (১৮০,০০০ মি.সে.) অপেক্ষা করে
   const res = await axios.get(url, { timeout: 180000 });
@@ -1061,7 +1076,7 @@ function buildHTMLv4(d) {
   const permanentAddr = (d.permanentAddress || "").replace(/\r\n/g, "<br>").replace(/\n/g, "<br>");
   const qrData = encodeURIComponent(`${d.nameEnglish} ${d.nid} ${d.dob}`);
 
-  // রক্তের গ্রুপ খালি, N/A বা '-' থাকলে যেন কিছু না দেখায়
+  // রক্তের গ্রুপ খালি, N/A বা '-' থাকলে যেন কিছু না দেখায়
   let bloodText = d.bloodGroup || "";
   if (bloodText === "-" || bloodText === "N/A" || bloodText.trim() === "") {
     bloodText = "";
@@ -1144,7 +1159,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37%; top: 35%; font-size: 14px;">ফরম নাম্বার</div>
         <div style="position: absolute; left: 55%; top: 35%; font-size: 14px;">${d.oldNid || ''}</div>
 
-        <!-- ✅ ১. ভোটার নাম্বার এর জায়গায় উপজেলা কোড -->
+        <!-- ✅ ১. ভোটার নাম্বার এর জায়গায় উপজেলা কোড -->
         <div style="position: absolute; left: 37%; top: 37.5%; font-size: 14px;">উপজেলা কোড</div>
         <div style="position: absolute; left: 55%; top: 37.5%; font-size: 14px;">${d.upazilaCode || ''}</div>
 
@@ -1167,7 +1182,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37%; top: 56.2%; font-size: 14px;">মাতার নাম</div>
         <div style="position: absolute; left: 55%; top: 56.2%; font-size: 14px;">${d.mother || ''}</div>
 
-        <!-- ✅ ২. স্বামী/স্ত্রীর নাম এর জায়গায় রক্তের গ্রুপ (খালি থাকলে '-' আসবে না) -->
+        <!-- ✅ ২. স্বামী/স্ত্রীর নাম এর জায়গায় রক্তের গ্রুপ (খালি থাকলে '-' আসবে না) -->
         <div style="position: absolute; left: 37%; top: 59%; font-size: 14px;">রক্তের গ্রুপ</div>
         <div style="position: absolute; left: 55%; top: 59%; font-size: 14px; color: rgb(252, 0, 0);">${bloodText}</div>
 
@@ -1179,7 +1194,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37%; top: 67.6%; font-size: 14px;">জন্মস্থান</div>
         <div style="position: absolute; left: 55%; top: 67.6%; font-size: 14px;">${d.birthPlace || ''}</div>
 
-        <!-- ✅ ৩. রক্তের গ্রুপ এর জায়গায় শিক্ষাগত যোগ্যতা -->
+        <!-- ✅ ৩. রক্তের গ্রুপ এর জায়গায় শিক্ষাগত যোগ্যতা -->
         <div style="position: absolute; left: 37%; top: 70.3%; font-size: 14px;">শিক্ষাগত যোগ্যতা</div>
         <div style="position: absolute; left: 55%; top: 70.3%; font-size: 14px;">${d.education || ''}</div>
 
@@ -1277,7 +1292,8 @@ async function convertHTMLtoPDF(html) {
 }
 
 // ─────────────────── PROCESS: PDF → Card → Send ────────────────
-async function processNIDCard(from, data, version, msgId) {
+// ✅ UPDATED: mode প্যারামিটার যোগ হলো ("pdf" / "sv") — caption এ সঠিক price দেখানোর জন্য
+async function processNIDCard(from, data, version, msgId, mode = "pdf") {
   if (msgId) markRead(msgId);
 
   const html      = buildHTML(version, data);
@@ -1289,7 +1305,7 @@ async function processNIDCard(from, data, version, msgId) {
   const safeName = (data.nameEnglish || data.nameBangla || "NID").replace(/[/\\?%*:|"<>]/g, "").trim();
   const filename  = `${data.nid || Date.now()} - ${safeName}.pdf`;
 
-  const price  = getCardPriceForUser(from); // ✅ per-user price
+  const price  = getPriceForUser(from, mode); // ✅ mode অনুযায়ী সঠিক price
   const defVer = getUserDefaultVersion(from);
 
   const captionLines = [
@@ -1308,7 +1324,7 @@ async function processNIDCard(from, data, version, msgId) {
   await sendDocument(from, mediaId, filename, "");
 
   clearPending(from);
-  console.log(`✅ Card sent to ${from} — V${version} — NID: ${data.nid}`);
+  console.log(`✅ Card sent to ${from} — V${version} — NID: ${data.nid} — Mode: ${mode}`);
 }
 
 // ─────────────────── INCOMING MESSAGE HANDLER ──────────────────
@@ -1386,10 +1402,10 @@ async function handleIncoming(msg, contact) {
 
       const nidInput = svMatch[1];
       const dobInput = svMatch[2];
-      const price    = getCardPriceForUser(from);
+      const price    = getPriceForUser(from, "sv"); // ✅ SV mode price
 
       if (price > 0 && getUserBalance(from) < price) {
-        return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
+        return sendText(from, `❌ Balance কম! ${price} টাকা দরকার (SV)।\nBalance: ${getUserBalance(from)} টাকা`);
       }
 
       await sendText(from, "⏳ SV Service: NID তথ্য fetch হচ্ছে...");
@@ -1398,11 +1414,11 @@ async function handleIncoming(msg, contact) {
         const data    = await fetchNIDFromSVApi(nidInput, dobInput);
         const version = getUserDefaultVersion(from) || 4;
 
-        if (price > 0 && !deductBalance(from)) {
-          return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`);
+        if (price > 0 && !deductBalance(from, "sv")) { // ✅ SV mode deduct
+          return sendText(from, `❌ Balance কম! ${price} টাকা দরকার (SV)।`);
         }
 
-        return processNIDCard(from, data, version, null)
+        return processNIDCard(from, data, version, null, "sv") // ✅ mode পাস করা হলো
           .catch(e => sendText(from, `❌ Error: ${e.message}`));
       } catch (err) {
         console.error("SV API error:", err.message);
@@ -1447,11 +1463,12 @@ async function handleIncoming(msg, contact) {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
       const bal    = getUserBalance(from);
-      const price  = getCardPriceForUser(from); // ✅ per-user price
+      const cardP  = getCardPriceForUser(from);
+      const svP    = getSVPriceForUser(from); // ✅ SV price দেখানো
       const defVer = getUserDefaultVersion(from);
       const svMode = getUserServiceMode(from);
       return sendText(from,
-        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price: ${price} টাকা\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*`
+        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price (PDF): ${cardP} টাকা\n🔧 SV Price: ${svP} টাকা\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*`
       );
     }
 
@@ -1478,9 +1495,9 @@ async function handleIncoming(msg, contact) {
       const pending = getPending(from);
       if (!pending) { markRead(msgId); return sendText(from, "❌ কোনো PDF পাওয়া যায়নি। আগে PDF পাঠান।"); }
       if (!isAllowed(from)) { markRead(msgId); return sendText(from, "❌ আপনি authorized নন।"); }
-      const price = getCardPriceForUser(from); // ✅ per-user price
-      if (price > 0 && !deductBalance(from)) { markRead(msgId); return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`); }
-      return processNIDCard(from, pending.data, vMap[text], msgId)
+      const price = getCardPriceForUser(from); // ✅ PDF flow — per-user PDF price
+      if (price > 0 && !deductBalance(from, "pdf")) { markRead(msgId); return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`); }
+      return processNIDCard(from, pending.data, vMap[text], msgId, "pdf")
         .catch(e => sendText(from, `❌ Error: ${e.message}`));
     }
 
@@ -1497,8 +1514,8 @@ async function handleIncoming(msg, contact) {
     if (!pending) { markRead(msgId); return sendText(from, "❌ Expired! আবার PDF পাঠান।"); }
     if (!isAllowed(from)) { markRead(msgId); return sendText(from, "❌ আপনি authorized নন।"); }
 
-    const price = getCardPriceForUser(from); // ✅ per-user price
-    if (price > 0 && !deductBalance(from)) {
+    const price = getCardPriceForUser(from); // ✅ PDF flow price
+    if (price > 0 && !deductBalance(from, "pdf")) {
       markRead(msgId);
       return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
     }
@@ -1507,7 +1524,7 @@ async function handleIncoming(msg, contact) {
     const version    = versionMap[buttonId];
     if (!version) { markRead(msgId); return sendText(from, "❌ অজানা choice।"); }
 
-    return processNIDCard(from, pending.data, version, msgId)
+    return processNIDCard(from, pending.data, version, msgId, "pdf")
       .catch(e => sendText(from, `❌ Error: ${e.message}`));
   }
 
@@ -1533,12 +1550,12 @@ async function handleIncoming(msg, contact) {
       }
 
       if (defVersion > 0) {
-        const price = getCardPriceForUser(from); // ✅ per-user price
-        if (price > 0 && !deductBalance(from)) {
+        const price = getCardPriceForUser(from); // ✅ PDF flow price
+        if (price > 0 && !deductBalance(from, "pdf")) {
           return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`);
         }
         setPending(from, data);
-        return processNIDCard(from, data, defVersion, null)
+        return processNIDCard(from, data, defVersion, null, "pdf")
           .catch(e => sendText(from, `❌ Error: ${e.message}`));
       }
 
@@ -1640,6 +1657,7 @@ app.get("/admin", adminAuth, (req, res) => {
        <td>${u.name || "—"}</td>
       <td style="color:${(u.balance||0) < 0 ? 'red':'green'};font-weight:bold">${u.balance||0} ৳</td>
       <td>${u.price !== undefined && u.price !== null && u.price !== "" ? `${u.price} ৳` : `<span style="color:#888">default</span>`}</td>
+      <td>${u.svPrice !== undefined && u.svPrice !== null && u.svPrice !== "" ? `${u.svPrice} ৳` : `<span style="color:#888">default</span>`}</td>
        <td>${u.active !== false ? "✅":"❌"}</td>
       <td style="font-weight:bold;color:#0078d4">${def}</td>
       <td>${svcMode}</td>
@@ -1654,8 +1672,13 @@ app.get("/admin", adminAuth, (req, res) => {
         </form>
         <form method="POST" action="/admin/setprice" style="display:inline;white-space:nowrap">
           <input type="hidden" name="number" value="${u.number}"/>
-          <input name="price" placeholder="Custom ৳" type="number" value="${u.price ?? ''}" style="width:75px;padding:3px"/>
-          <button style="background:#f59e0b;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">Set Price</button>
+          <input name="price" placeholder="PDF ৳" type="number" value="${u.price ?? ''}" style="width:65px;padding:3px"/>
+          <button style="background:#f59e0b;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">Set</button>
+        </form>
+        <form method="POST" action="/admin/setsvprice" style="display:inline;white-space:nowrap">
+          <input type="hidden" name="number" value="${u.number}"/>
+          <input name="svPrice" placeholder="SV ৳" type="number" value="${u.svPrice ?? ''}" style="width:65px;padding:3px"/>
+          <button style="background:#0891b2;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">Set SV</button>
         </form>
         <form method="POST" action="/admin/setversion" style="display:inline;white-space:nowrap">
           <input type="hidden" name="number" value="${u.number}"/>
@@ -1699,10 +1722,11 @@ app.get("/admin", adminAuth, (req, res) => {
     <div class="card">
       <h3>⚙️ Settings</h3>
       <form method="POST" action="/admin/settings">
-        Default Card Price (৳): <input name="cardPrice" value="${settings.cardPrice||0}" style="width:80px" type="number"/>
+        PDF Card Price (৳): <input name="cardPrice" value="${settings.cardPrice||0}" style="width:80px" type="number"/>
+        SV Service Price (৳): <input name="svPrice" value="${settings.svPrice||0}" style="width:80px" type="number"/>
         <button>Save</button>
       </form>
-      <p style="font-size:12px;color:#666;margin-top:6px">যেসব user এর Custom Price সেট করা নেই, তারা এই default price ব্যবহার করবে।</p>
+      <p style="font-size:12px;color:#666;margin-top:6px">যেসব user এর Custom Price সেট করা নেই, তারা এই default price ব্যবহার করবে। PDF আর SV mode এর price সম্পূর্ণ আলাদাভাবে কাজ করবে।</p>
     </div>
 
     <div class="card">
@@ -1724,7 +1748,8 @@ app.get("/admin", adminAuth, (req, res) => {
         <input name="number" placeholder="880XXXXXXXXXX" required/>
         <input name="name"   placeholder="Name"/>
         <input name="balance" placeholder="Balance" value="0" type="number" style="width:80px"/>
-        <input name="price" placeholder="Custom Price (blank=default)" type="number" style="width:190px"/>
+        <input name="price" placeholder="PDF Price (blank=default)" type="number" style="width:170px"/>
+        <input name="svPrice" placeholder="SV Price (blank=default)" type="number" style="width:170px"/>
         <select name="defaultVersion">
           <option value="0">Auto (choice দেখাবে)</option>
           <option value="1">V1 Default</option>
@@ -1744,7 +1769,7 @@ app.get("/admin", adminAuth, (req, res) => {
 
     <h3>👥 Users (${users.length})</h3>
     <table>
-      <tr><th>Number</th><th>Name</th><th>Balance</th><th>Price</th><th>Active</th><th>Default Ver</th><th>Mode</th><th>Cards</th><th>Last Used</th><th>Actions</th></tr>
+      <tr><th>Number</th><th>Name</th><th>Balance</th><th>PDF Price</th><th>SV Price</th><th>Active</th><th>Default Ver</th><th>Mode</th><th>Cards</th><th>Last Used</th><th>Actions</th></tr>
       ${rows}
     </table>
   </body></html>`);
@@ -1752,7 +1777,7 @@ app.get("/admin", adminAuth, (req, res) => {
 
 app.post("/admin/add", adminAuth, (req, res) => {
   const users = getUsers();
-  const { number, name, balance, defaultVersion, price } = req.body;
+  const { number, name, balance, defaultVersion, price, svPrice } = req.body;
   const n = normalizeNumber(number);
   if (!users.find(u => normalizeNumber(u.number) === n)) {
     const newUser = {
@@ -1761,7 +1786,8 @@ app.post("/admin/add", adminAuth, (req, res) => {
       active: true,
       defaultVersion: parseInt(defaultVersion)||0,
     };
-    if (price !== undefined && price !== "") newUser.price = parseFloat(price); // ✅ custom price (দিলে)
+    if (price   !== undefined && price   !== "") newUser.price   = parseFloat(price);   // ✅ custom PDF price (দিলে)
+    if (svPrice !== undefined && svPrice !== "") newUser.svPrice = parseFloat(svPrice); // ✅ custom SV price (দিলে)
     users.push(newUser);
     saveUsers(users); backupData();
   }
@@ -1780,14 +1806,27 @@ app.post("/admin/recharge", adminAuth, (req, res) => {
   res.redirect("/admin");
 });
 
-// ✅ NEW: প্রতিটা user এর জন্য আলাদা price সেট/আপডেট/রিমুভ করার route
+// ✅ প্রতিটা user এর জন্য আলাদা PDF price সেট/আপডেট/রিমুভ করার route
 app.post("/admin/setprice", adminAuth, (req, res) => {
   const users = getUsers();
   const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
   if (i !== -1) {
     const p = req.body.price;
-    if (p === "" || p === undefined) delete users[i].price; // খালি রেখে Set Price দিলে আবার default price এ ফিরে যাবে
+    if (p === "" || p === undefined) delete users[i].price; // খালি রেখে Set দিলে আবার default price এ ফিরে যাবে
     else users[i].price = parseFloat(p);
+    saveUsers(users); backupData();
+  }
+  res.redirect("/admin");
+});
+
+// ✅ NEW: প্রতিটা user এর জন্য আলাদা SV price সেট/আপডেট/রিমুভ করার route
+app.post("/admin/setsvprice", adminAuth, (req, res) => {
+  const users = getUsers();
+  const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
+  if (i !== -1) {
+    const p = req.body.svPrice;
+    if (p === "" || p === undefined) delete users[i].svPrice; // খালি রেখে Set SV দিলে আবার default svPrice এ ফিরে যাবে
+    else users[i].svPrice = parseFloat(p);
     saveUsers(users); backupData();
   }
   res.redirect("/admin");
@@ -1816,8 +1855,12 @@ app.post("/admin/delete", adminAuth, (req, res) => {
   res.redirect("/admin");
 });
 
+// ✅ UPDATED: cardPrice এবং svPrice দুটোই save হবে
 app.post("/admin/settings", adminAuth, (req, res) => {
-  saveSettings({ cardPrice: parseFloat(req.body.cardPrice) || 0 });
+  saveSettings({
+    cardPrice: parseFloat(req.body.cardPrice) || 0,
+    svPrice:   parseFloat(req.body.svPrice)   || 0,
+  });
   backupData();
   res.redirect("/admin");
 });
@@ -1827,7 +1870,7 @@ app.post("/admin/backup", adminAuth, async (req, res) => {
   res.redirect("/admin");
 });
 
-// ✅ NEW: সব active user কে broadcast message পাঠানো
+// ✅ সব active user কে broadcast message পাঠানো
 app.post("/admin/broadcast", adminAuth, async (req, res) => {
   const message = (req.body.message || "").trim();
   if (!message) return res.redirect("/admin");
