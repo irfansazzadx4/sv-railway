@@ -306,23 +306,26 @@ async function backupData() {
       saveToMongo("backups", "stats",        getStats()),
       saveToMongo("backups", "settings",     getSettings()),
       saveToMongo("backups", "transactions", getTransactions()), // ✅
+      saveToMongo("backups", "svcache",      getSVCache()),      // ✅ যেন redeploy এর পরও cache হারিয়ে গিয়ে আবার API call না হয়
     ]);
   } catch (e) { console.error("Backup error:", e.message); }
 }
 
 async function restoreData() {
   try {
-    const [users, stats, settings, transactions] = await Promise.all([
+    const [users, stats, settings, transactions, svcache] = await Promise.all([
       loadFromMongo("backups", "users"),
       loadFromMongo("backups", "stats"),
       loadFromMongo("backups", "settings"),
       loadFromMongo("backups", "transactions"), // ✅
+      loadFromMongo("backups", "svcache"),      // ✅
     ]);
     if (users        && !fs.existsSync(USERS_FILE))        saveUsers(users);
     if (stats        && !fs.existsSync(STATS_FILE))        saveStats(stats);
     if (settings      && !fs.existsSync(SETTINGS_FILE))     saveSettings(settings);
     if (transactions && !fs.existsSync(TRANSACTIONS_FILE)) saveTransactions(transactions);
-    if (users || stats || settings || transactions) console.log("✅ Data restored from MongoDB");
+    if (svcache      && !fs.existsSync(SV_CACHE_FILE))      saveSVCache(svcache);
+    if (users || stats || settings || transactions || svcache) console.log("✅ Data restored from MongoDB");
     else console.log("ℹ️ No MongoDB data — starting fresh");
   } catch (e) { console.error("Restore error:", e.message); }
 }
@@ -549,9 +552,77 @@ async function extractNIDFromPDF(buffer) {
   }
 }
 
+// ✅ NEW: যেকোনো ফরম্যাটের DOB কে YYYY-MM-DD এ normalize করার জন্য
+// সাপোর্ট করে: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, "31 January 2004"
+const MONTH_NAME_MAP = {
+  jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+  may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12,
+};
+
+function buildYMD(y, mo, d) {
+  const yy = String(y).padStart(4, "0");
+  const mm = String(mo).padStart(2, "0");
+  const dd = String(d).padStart(2, "0");
+  const mNum = parseInt(mm, 10), dNum = parseInt(dd, 10);
+  if (!yy || yy.length !== 4 || mNum < 1 || mNum > 12 || dNum < 1 || dNum > 31) return null;
+  return `${yy}-${mm}-${dd}`;
+}
+
+function normalizeDOB(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+
+  // ইতিমধ্যে YYYY-MM-DD ফরম্যাটে থাকলে
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return buildYMD(m[1], m[2], m[3]);
+
+  // / . - যেকোনো separator দিয়ে ৩টা numeric অংশ — YYYY/MM/DD বা DD/MM/YYYY দুটোই হ্যান্ডেল করবে
+  m = s.match(/^(\d{1,4})[\/.\-](\d{1,2})[\/.\-](\d{1,4})$/);
+  if (m) {
+    const [, p1, p2, p3] = m;
+    if (p1.length === 4) return buildYMD(p1, p2, p3); // YYYY/MM/DD, YYYY.MM.DD
+    if (p3.length === 4) return buildYMD(p3, p2, p1); // DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+  }
+
+  // "31 January 2004" / "31 Jan 2004" ফরম্যাট
+  m = s.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})$/);
+  if (m) {
+    const [, d, monName, y] = m;
+    const mo = MONTH_NAME_MAP[monName.toLowerCase()];
+    if (mo) return buildYMD(y, mo, d);
+  }
+
+  return null;
+}
+
+// ✅ NEW: একবার সফল হওয়া NID+DOB lookup আবার API call না করে cache থেকে serve করার জন্য (token বাঁচাতে)
+const SV_CACHE_FILE = path.join(CONFIG.DATA_DIR, "sv_cache.json");
+const getSVCache  = () => loadJSON(SV_CACHE_FILE, {});
+const saveSVCache = (c) => saveJSON(SV_CACHE_FILE, c);
+
+function svCacheKey(nid, dob) { return `${nid}_${dob}`; }
+
+function getCachedSVData(nid, dob) {
+  const cache = getSVCache();
+  return cache[svCacheKey(nid, dob)] || null;
+}
+
+function setCachedSVData(nid, dob, data) {
+  const cache = getSVCache();
+  cache[svCacheKey(nid, dob)] = { data, time: new Date().toISOString() };
+  const keys = Object.keys(cache);
+  if (keys.length > 5000) { // পুরনো entry গুলো ছেঁটে ফেলা হচ্ছে যেন ফাইল অসীম বড় না হয়
+    keys.sort((a, b) => new Date(cache[a].time) - new Date(cache[b].time))
+      .slice(0, keys.length - 5000)
+      .forEach(k => delete cache[k]);
+  }
+  saveSVCache(cache);
+}
+
 // ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
 async function fetchNIDFromSVApi(nid, dob) {
-  const url = `https://onlinebd.duckdns.org/api_check.php?key=030c9b9015d4e47a199c92&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
+  const url = `https://all-api.top/sv.php?key=arthurx4&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
   
   // ✅ API slow হলেও যেন ৩ মিনিট (১৮০,০০০ মি.সে.) অপেক্ষা করে
   const res = await axios.get(url, { timeout: 180000 });
@@ -1507,25 +1578,50 @@ async function handleIncoming(msg, contact) {
     }
 
     // ── SV Mode: NID DOB auto-detection ──
-    // Format: "1234567890 1990-01-01" — দুটো space-separated part
-    const svMatch = rawText.trim().match(/^(\d{10,17})\s+([\d]{4}-[\d]{2}-[\d]{2}|\d{1,2}\s+\w+\s+\d{4}|\d{2}\/\d{2}\/\d{4})$/i);
+    // ✅ এখন যেকোনো ফরম্যাট সাপোর্ট করে: 2004-02-31, 2004/02/31, 31/02/2004, 31.02.2004, 31-02-2004, "31 January 2004"
+    const svMatch = rawText.trim().match(/^(\d{10,17})\s+(\d{1,4}[\/.\-]\d{1,2}[\/.\-]\d{1,4}|\d{1,2}\s+[a-zA-Z]+\s+\d{4})$/);
     if (svMatch && getUserServiceMode(from) === "sv") {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
 
-      const nidInput = svMatch[1];
-      const dobInput = svMatch[2];
-      const price    = getPriceForUser(from, "sv"); // ✅ SV mode price
+      const nidInputRaw   = svMatch[1];
+      const dobNormalized = normalizeDOB(svMatch[2]); // ✅ যেকোনো ফরম্যাট থেকে YYYY-MM-DD এ convert
+
+      if (!dobNormalized) {
+        return sendText(from,
+          "❌ জন্ম তারিখের ফরম্যাট বুঝতে পারিনি।\nব্যবহার করুন: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, YYYY/MM/DD ইত্যাদি।"
+        );
+      }
+
+      // ✅ পুরনো 13-digit NID হলে DOB এর জন্ম সাল (৪ ডিজিট) সামনে বসিয়ে ১৭ ডিজিট বানানো হচ্ছে
+      let nidForApi = nidInputRaw;
+      if (nidInputRaw.length === 13) {
+        nidForApi = dobNormalized.slice(0, 4) + nidInputRaw;
+      }
+
+      const price = getPriceForUser(from, "sv"); // ✅ SV mode price
 
       if (price > 0 && getUserBalance(from) < price) {
         return sendText(from, `❌ Balance কম! ${price} টাকা দরকার (SV)।\nBalance: ${getUserBalance(from)} টাকা`);
       }
 
+      // ✅ একই NID+DOB আগে একবার সফল হয়ে থাকলে আবার API call হবে না (token বাঁচাতে) — warning দিয়ে cache থেকে পাঠানো হবে
+      const cached = getCachedSVData(nidForApi, dobNormalized);
+      if (cached) {
+        const version = getUserDefaultVersion(from) || 4;
+        await sendText(from,
+          "⚠️ এই NID + জন্ম তারিখের তথ্য আগেই একবার fetch করা হয়েছিল। টোকেন বাঁচাতে আবার API call না করে আগের তথ্য থেকেই কার্ড বানানো হচ্ছে।"
+        );
+        return chargeAndProcess(from, cached.data, version, null, "sv");
+      }
+
       await sendText(from, "⏳ SV Service: NID তথ্য fetch হচ্ছে...");
 
       try {
-        const data    = await fetchNIDFromSVApi(nidInput, dobInput);
+        const data    = await fetchNIDFromSVApi(nidForApi, dobNormalized);
         const version = getUserDefaultVersion(from) || 4;
+
+        setCachedSVData(nidForApi, dobNormalized, data); // ✅ পরের বার একই NID+DOB এলে আর API call হবে না
 
         return chargeAndProcess(from, data, version, null, "sv"); // ✅ deduct + process + fail হলে auto-refund
       } catch (err) {
