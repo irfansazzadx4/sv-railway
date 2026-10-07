@@ -43,9 +43,10 @@ const CONFIG = {
 if (!fs.existsSync(CONFIG.STORAGE_DIR)) fs.mkdirSync(CONFIG.STORAGE_DIR, { recursive: true });
 if (!fs.existsSync(CONFIG.DATA_DIR))    fs.mkdirSync(CONFIG.DATA_DIR,    { recursive: true });
 
-const USERS_FILE    = path.join(CONFIG.DATA_DIR, "users.json");
-const STATS_FILE    = path.join(CONFIG.DATA_DIR, "stats.json");
-const SETTINGS_FILE = path.join(CONFIG.DATA_DIR, "settings.json");
+const USERS_FILE        = path.join(CONFIG.DATA_DIR, "users.json");
+const STATS_FILE        = path.join(CONFIG.DATA_DIR, "stats.json");
+const SETTINGS_FILE     = path.join(CONFIG.DATA_DIR, "settings.json");
+const TRANSACTIONS_FILE = path.join(CONFIG.DATA_DIR, "transactions.json"); // ✅ প্রতিটা job এর আলাদা log
 
 // ─────────────────────────── HELPERS ───────────────────────────
 const loadJSON = (f, def) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return def; } };
@@ -58,6 +59,8 @@ const saveStats   = (s) => saveJSON(STATS_FILE,   s);
 // ✅ svPrice যোগ হলো global settings এ
 const getSettings = () => loadJSON(SETTINGS_FILE, { cardPrice: 0, svPrice: 0 });
 const saveSettings= (s) => saveJSON(SETTINGS_FILE, s);
+const getTransactions  = () => loadJSON(TRANSACTIONS_FILE, []);  // ✅ job log
+const saveTransactions = (t) => saveJSON(TRANSACTIONS_FILE, t);
 
 function normalizeNumber(num) {
   let n = String(num).replace(/\D/g, "");
@@ -156,6 +159,68 @@ function recordStat(number) {
   saveStats(stats);
 }
 
+// ✅ NEW: প্রতিটা সফল job এর জন্য আলাদা log — কে, কখন, কোন mode/version, কত টাকা কাটলো
+function recordTransaction(number, { mode, version, price, nid, name }) {
+  const txs = getTransactions();
+  txs.push({
+    number: normalizeNumber(number),
+    mode:    mode    || "pdf",
+    version: version || 0,
+    price:   price   || 0,
+    nid:     nid      || "",
+    name:    name     || "",
+    time:    new Date().toISOString(),
+  });
+  // ✅ ফাইল যেন unlimited বড় না হয় — সর্বশেষ ৫০০০ টা entry রাখা হচ্ছে
+  if (txs.length > 5000) txs.splice(0, txs.length - 5000);
+  saveTransactions(txs);
+}
+
+// ✅ NEW: টাকা কাটার পর card তৈরি fail করলে refund করার জন্য
+function refundBalance(number, amount) {
+  if (!amount) return;
+  const users = getUsers();
+  const idx = users.findIndex(x => normalizeNumber(x.number) === normalizeNumber(number));
+  if (idx !== -1) {
+    users[idx].balance = (users[idx].balance || 0) + amount;
+    saveUsers(users);
+  }
+}
+
+function isToday(isoTime) {
+  return isoTime && isoTime.slice(0, 10) === new Date().toISOString().slice(0, 10);
+}
+
+// ✅ NEW: একজন user এর সম্পূর্ণ history + today/total summary
+function getUserTxSummary(number) {
+  const n   = normalizeNumber(number);
+  const all = getTransactions().filter(t => t.number === n);
+  const today = all.filter(t => isToday(t.time));
+  return {
+    count:       all.length,
+    totalSpent:  all.reduce((s, t) => s + (t.price || 0), 0),
+    todayCount:  today.length,
+    todaySpent:  today.reduce((s, t) => s + (t.price || 0), 0),
+    list:        all.slice().reverse(), // সর্বশেষটা আগে
+  };
+}
+
+// ✅ NEW: আজকে কোন user কতটা কাজ করলো ও কত টাকা কাটলো — admin dashboard এর জন্য
+function getTodayActivitySummary() {
+  const txs   = getTransactions().filter(t => isToday(t.time));
+  const users = getUsers();
+  const map   = new Map();
+  for (const t of txs) {
+    if (!map.has(t.number)) map.set(t.number, { number: t.number, jobs: 0, spent: 0 });
+    const row = map.get(t.number);
+    row.jobs++;
+    row.spent += t.price || 0;
+  }
+  return [...map.values()]
+    .map(r => ({ ...r, name: users.find(u => normalizeNumber(u.number) === r.number)?.name || "" }))
+    .sort((a, b) => b.jobs - a.jobs);
+}
+
 function toBn(num) {
   if (num === undefined || num === null) return "";
   const digits = String(num);
@@ -182,6 +247,20 @@ function getPending(number) {
 
 function clearPending(number) {
   pendingChoices.delete(normalizeNumber(number));
+}
+
+// ✅ NEW: WhatsApp মাঝে মাঝে একই webhook event ২বার পাঠায় (retry) — এতে ডাবল চার্জ ঠেকানো হচ্ছে
+const processedMsgIds = new Set();
+function isDuplicateMessage(msgId) {
+  if (!msgId) return false;
+  if (processedMsgIds.has(msgId)) return true;
+  processedMsgIds.add(msgId);
+  if (processedMsgIds.size > 3000) {
+    const arr = [...processedMsgIds].slice(-1500);
+    processedMsgIds.clear();
+    arr.forEach(id => processedMsgIds.add(id));
+  }
+  return false;
 }
 
 // ─────────────────────────── MONGODB ───────────────────────────
@@ -223,24 +302,27 @@ async function loadFromMongo(collection, key) {
 async function backupData() {
   try {
     await Promise.all([
-      saveToMongo("backups", "users",    getUsers()),
-      saveToMongo("backups", "stats",    getStats()),
-      saveToMongo("backups", "settings", getSettings()),
+      saveToMongo("backups", "users",        getUsers()),
+      saveToMongo("backups", "stats",        getStats()),
+      saveToMongo("backups", "settings",     getSettings()),
+      saveToMongo("backups", "transactions", getTransactions()), // ✅
     ]);
   } catch (e) { console.error("Backup error:", e.message); }
 }
 
 async function restoreData() {
   try {
-    const [users, stats, settings] = await Promise.all([
+    const [users, stats, settings, transactions] = await Promise.all([
       loadFromMongo("backups", "users"),
       loadFromMongo("backups", "stats"),
       loadFromMongo("backups", "settings"),
+      loadFromMongo("backups", "transactions"), // ✅
     ]);
-    if (users    && !fs.existsSync(USERS_FILE))    saveUsers(users);
-    if (stats    && !fs.existsSync(STATS_FILE))    saveStats(stats);
-    if (settings && !fs.existsSync(SETTINGS_FILE)) saveSettings(settings);
-    if (users || stats || settings) console.log("✅ Data restored from MongoDB");
+    if (users        && !fs.existsSync(USERS_FILE))        saveUsers(users);
+    if (stats        && !fs.existsSync(STATS_FILE))        saveStats(stats);
+    if (settings      && !fs.existsSync(SETTINGS_FILE))     saveSettings(settings);
+    if (transactions && !fs.existsSync(TRANSACTIONS_FILE)) saveTransactions(transactions);
+    if (users || stats || settings || transactions) console.log("✅ Data restored from MongoDB");
     else console.log("ℹ️ No MongoDB data — starting fresh");
   } catch (e) { console.error("Restore error:", e.message); }
 }
@@ -1323,8 +1405,39 @@ async function processNIDCard(from, data, version, msgId, mode = "pdf") {
   await sendText(from, captionLines);
   await sendDocument(from, mediaId, filename, "");
 
+  // ✅ প্রতিটা সফল job এর জন্য আলাদা log — admin panel এর "কে কত কাজ করলো" রিপোর্ট এখান থেকে আসবে
+  recordTransaction(from, {
+    mode, version, price,
+    nid:  data.nid,
+    name: data.nameBangla || data.nameEnglish || "",
+  });
+
   clearPending(from);
   console.log(`✅ Card sent to ${from} — V${version} — NID: ${data.nid} — Mode: ${mode}`);
+}
+
+// ✅ NEW: balance কাটা + card তৈরি — fail করলে automatic refund করে দেয় (আগে এই bug ছিল: PDF fail হলে টাকা কাটা থেকেই যেত)
+async function chargeAndProcess(from, data, version, msgId, mode = "pdf") {
+  const price = getPriceForUser(from, mode);
+
+  if (price > 0 && !deductBalance(from, mode)) {
+    if (msgId) markRead(msgId);
+    return sendText(from,
+      `❌ Balance কম! ${price} টাকা দরকার (${mode === "sv" ? "SV" : "PDF"})।\nBalance: ${getUserBalance(from)} টাকা`
+    );
+  }
+
+  try {
+    await processNIDCard(from, data, version, msgId, mode);
+  } catch (e) {
+    console.error("processNIDCard failed:", e.message);
+    if (price > 0) {
+      refundBalance(from, price); // ✅ টাকা ফেরত
+      await sendText(from, `❌ Error: ${e.message}\n💰 আপনার ${price} টাকা ফেরত দেওয়া হয়েছে। আবার চেষ্টা করুন।`);
+    } else {
+      await sendText(from, `❌ Error: ${e.message}\nআবার চেষ্টা করুন।`);
+    }
+  }
 }
 
 // ─────────────────── INCOMING MESSAGE HANDLER ──────────────────
@@ -1414,12 +1527,7 @@ async function handleIncoming(msg, contact) {
         const data    = await fetchNIDFromSVApi(nidInput, dobInput);
         const version = getUserDefaultVersion(from) || 4;
 
-        if (price > 0 && !deductBalance(from, "sv")) { // ✅ SV mode deduct
-          return sendText(from, `❌ Balance কম! ${price} টাকা দরকার (SV)।`);
-        }
-
-        return processNIDCard(from, data, version, null, "sv") // ✅ mode পাস করা হলো
-          .catch(e => sendText(from, `❌ Error: ${e.message}`));
+        return chargeAndProcess(from, data, version, null, "sv"); // ✅ deduct + process + fail হলে auto-refund
       } catch (err) {
         console.error("SV API error:", err.message);
         return sendText(from, `❌ SV Error: ${err.message}\nআবার চেষ্টা করুন।`);
@@ -1495,10 +1603,7 @@ async function handleIncoming(msg, contact) {
       const pending = getPending(from);
       if (!pending) { markRead(msgId); return sendText(from, "❌ কোনো PDF পাওয়া যায়নি। আগে PDF পাঠান।"); }
       if (!isAllowed(from)) { markRead(msgId); return sendText(from, "❌ আপনি authorized নন।"); }
-      const price = getCardPriceForUser(from); // ✅ PDF flow — per-user PDF price
-      if (price > 0 && !deductBalance(from, "pdf")) { markRead(msgId); return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`); }
-      return processNIDCard(from, pending.data, vMap[text], msgId, "pdf")
-        .catch(e => sendText(from, `❌ Error: ${e.message}`));
+      return chargeAndProcess(from, pending.data, vMap[text], msgId, "pdf"); // ✅ deduct + process + fail হলে auto-refund
     }
 
     markRead(msgId);
@@ -1514,18 +1619,11 @@ async function handleIncoming(msg, contact) {
     if (!pending) { markRead(msgId); return sendText(from, "❌ Expired! আবার PDF পাঠান।"); }
     if (!isAllowed(from)) { markRead(msgId); return sendText(from, "❌ আপনি authorized নন।"); }
 
-    const price = getCardPriceForUser(from); // ✅ PDF flow price
-    if (price > 0 && !deductBalance(from, "pdf")) {
-      markRead(msgId);
-      return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
-    }
-
     const versionMap = { choose_v1: 1, choose_v2: 2, choose_v3: 3 };
     const version    = versionMap[buttonId];
     if (!version) { markRead(msgId); return sendText(from, "❌ অজানা choice।"); }
 
-    return processNIDCard(from, pending.data, version, msgId, "pdf")
-      .catch(e => sendText(from, `❌ Error: ${e.message}`));
+    return chargeAndProcess(from, pending.data, version, msgId, "pdf"); // ✅ deduct + process + fail হলে auto-refund
   }
 
   if (msg.type === "document") {
@@ -1550,13 +1648,8 @@ async function handleIncoming(msg, contact) {
       }
 
       if (defVersion > 0) {
-        const price = getCardPriceForUser(from); // ✅ PDF flow price
-        if (price > 0 && !deductBalance(from, "pdf")) {
-          return sendText(from, `❌ Balance কম! ${price} টাকা দরকার।`);
-        }
         setPending(from, data);
-        return processNIDCard(from, data, defVersion, null, "pdf")
-          .catch(e => sendText(from, `❌ Error: ${e.message}`));
+        return chargeAndProcess(from, data, defVersion, null, "pdf"); // ✅ deduct + process + fail হলে auto-refund
       }
 
       setPending(from, data);
@@ -1592,6 +1685,7 @@ app.post("/webhook", async (req, res) => {
     const messages = change?.messages || [];
     const contacts = change?.contacts || [];
     for (const msg of messages) {
+      if (isDuplicateMessage(msg.id)) { console.log("⏭️ Duplicate webhook skipped:", msg.id); continue; } // ✅
       await handleIncoming(msg, contacts[0]);
     }
   } catch (e) { console.error("Webhook error:", e.message); }
@@ -1645,6 +1739,7 @@ app.get("/admin", adminAuth, (req, res) => {
   const users    = getUsers();
   const stats    = getStats();
   const settings = getSettings();
+  const today    = getTodayActivitySummary(); // ✅ আজকে কে কত কাজ করলো / কত টাকা কাটলো
 
   const rows = users.map(u => {
     const s   = stats[normalizeNumber(u.number)] || { count: 0, lastUsed: "—" };
@@ -1699,9 +1794,22 @@ app.get("/admin", adminAuth, (req, res) => {
           <input type="hidden" name="number" value="${u.number}"/>
           <button onclick="return confirm('Delete?')" style="background:#dc3545;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">🗑️</button>
         </form>
+        <a href="/admin/user/${u.number}" style="background:#6366f1;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-block">📋 History</a>
        </td>
      </tr>`;
   }).join("");
+
+  // ✅ আজকের কাজের summary rows — ke koyta kaj korlo ar koto tk katlo
+  const todayRows = today.map(r => `<tr>
+      <td>${r.number}</td>
+      <td>${r.name || "—"}</td>
+      <td><span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:12px;font-weight:bold">${r.jobs}</span></td>
+      <td style="color:#dc2626;font-weight:bold">${r.spent} ৳</td>
+      <td><a href="/admin/user/${r.number}" style="color:#6366f1">বিস্তারিত →</a></td>
+    </tr>`).join("") || `<tr><td colspan="5" style="text-align:center;padding:15px;color:#888">আজকে এখনো কেউ কাজ করেনি</td></tr>`;
+
+  const todayTotalJobs  = today.reduce((s, r) => s + r.jobs, 0);
+  const todayTotalSpent = today.reduce((s, r) => s + r.spent, 0);
 
   const pendingList = [...pendingChoices.entries()]
     .map(([num, p]) => `<li>${num} — ${p.data.nameBangla || "?"} (NID: ${p.data.nid || "?"})</li>`)
@@ -1727,6 +1835,14 @@ app.get("/admin", adminAuth, (req, res) => {
         <button>Save</button>
       </form>
       <p style="font-size:12px;color:#666;margin-top:6px">যেসব user এর Custom Price সেট করা নেই, তারা এই default price ব্যবহার করবে। PDF আর SV mode এর price সম্পূর্ণ আলাদাভাবে কাজ করবে।</p>
+    </div>
+
+    <div class="card">
+      <h3>📅 আজকের কাজের হিসাব <span style="font-size:12px;color:#666;font-weight:400">(মোট ${todayTotalJobs} টা কাজ, ${todayTotalSpent} ৳ কাটা হয়েছে)</span></h3>
+      <table>
+        <tr><th>Number</th><th>Name</th><th>আজ কাজ</th><th>আজ কাটা</th><th></th></tr>
+        ${todayRows}
+      </table>
     </div>
 
     <div class="card">
@@ -1772,6 +1888,56 @@ app.get("/admin", adminAuth, (req, res) => {
       <tr><th>Number</th><th>Name</th><th>Balance</th><th>PDF Price</th><th>SV Price</th><th>Active</th><th>Default Ver</th><th>Mode</th><th>Cards</th><th>Last Used</th><th>Actions</th></tr>
       ${rows}
     </table>
+  </body></html>`);
+});
+
+// ✅ NEW: প্রতিটা user এর আলাদা info page — মোট কাজ, মোট টাকা, আজকের কাজ/টাকা, আর সম্পূর্ণ job history
+app.get("/admin/user/:number", adminAuth, (req, res) => {
+  const number = normalizeNumber(req.params.number);
+  const u       = getUser(number);
+  const summary = getUserTxSummary(number);
+
+  const historyRows = summary.list.slice(0, 200).map(t => `<tr>
+      <td style="font-size:11px">${new Date(t.time).toLocaleString("en-BD", { timeZone: "Asia/Dhaka", hour12: true, dateStyle: "short", timeStyle: "short" })}</td>
+      <td><span class="badge ${t.mode === "sv" ? "badge-yellow" : "badge-blue"}">${t.mode === "sv" ? "SV" : "PDF"}</span></td>
+      <td>V${t.version}</td>
+      <td>${t.name || "—"}</td>
+      <td>${t.nid || "—"}</td>
+      <td style="color:#dc2626;font-weight:bold">${t.price} ৳</td>
+    </tr>`).join("") || `<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">কোনো কাজ করা হয়নি এখনো</td></tr>`;
+
+  res.send(`<html><head><style>
+    body{font-family:sans-serif;max-width:900px;margin:30px auto;padding:20px}
+    table{width:100%;border-collapse:collapse;margin:15px 0}
+    th,td{border:1px solid #ddd;padding:7px;text-align:left;font-size:12px}
+    th{background:#0078d4;color:#fff}
+    .card{background:#f9f9f9;padding:15px;margin:10px 0;border-radius:6px;border:1px solid #ddd}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+    .stat{background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center}
+    .stat .v{font-size:22px;font-weight:bold;color:#0078d4}
+    .stat .l{font-size:11px;color:#666}
+    .badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:bold}
+    .badge-blue{background:#dbeafe;color:#1e40af}
+    .badge-yellow{background:#fef3c7;color:#92400e}
+  </style></head><body>
+    <a href="/admin" style="color:#0078d4;text-decoration:none">← Admin Panel এ ফিরুন</a>
+    <h1>📋 ${u?.name || "User"} — ${number}</h1>
+
+    <div class="stats-grid">
+      <div class="stat"><div class="v">${getUserBalance(number)} ৳</div><div class="l">বর্তমান Balance</div></div>
+      <div class="stat"><div class="v">${summary.count}</div><div class="l">মোট কাজ (সর্বমোট)</div></div>
+      <div class="stat"><div class="v">${summary.totalSpent} ৳</div><div class="l">মোট টাকা কাটা হয়েছে</div></div>
+      <div class="stat"><div class="v">${summary.todayCount}</div><div class="l">আজকের কাজ</div></div>
+      <div class="stat"><div class="v">${summary.todaySpent} ৳</div><div class="l">আজকে কাটা হয়েছে</div></div>
+    </div>
+
+    <div class="card">
+      <h3>📜 Job History (সর্বশেষ ২০০ টা)</h3>
+      <table>
+        <tr><th>সময়</th><th>Mode</th><th>Version</th><th>নাম</th><th>NID</th><th>কাটা হয়েছে</th></tr>
+        ${historyRows}
+      </table>
+    </div>
   </body></html>`);
 });
 
