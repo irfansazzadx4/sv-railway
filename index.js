@@ -681,10 +681,34 @@ async function fetchNIDFromSVApi(nid, dob) {
     presentAddress:   presentAddr,
     permanentAddress: permanentAddr,
     photo:            d.photo       || d.userIMG        || d.imageUrl12 || "",
+    ageBangla:        d.ageBangla      || "", // ✅ V4 এর জন্য
+    birthDayBangla:   d.birthDayBangla || "", // ✅ V4 এর জন্য
     dateOfToday:      new Date().toLocaleDateString("bn-BD", {
       year: "numeric", month: "long", day: "numeric"
     }),
   };
+}
+
+// ✅ API তে ageBangla / birthDayBangla না থাকলে (পুরনো cache বা PDF mode) DOB থেকে নিজেই হিসাব করার fallback
+function calcAgeBangla(dob) {
+  const n = normalizeDOB(dob);
+  if (!n) return "";
+  const [y, m, d] = n.split("-").map(Number);
+  const now = new Date();
+  const ny = now.getUTCFullYear(), nm = now.getUTCMonth() + 1, nd = now.getUTCDate();
+  let yy = ny - y, mm = nm - m, dd = nd - d;
+  if (dd < 0) { mm--; dd += new Date(Date.UTC(ny, nm - 1, 0)).getUTCDate(); }
+  if (mm < 0) { yy--; mm += 12; }
+  if (yy < 0) return "";
+  return `${toBn(yy)} বছর, ${toBn(mm)} মাস, ${toBn(dd)} দিন`;
+}
+
+function calcBirthDayBangla(dob) {
+  const n = normalizeDOB(dob);
+  if (!n) return "";
+  const [y, m, d] = n.split("-").map(Number);
+  const days = ["রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"];
+  return days[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
 }
 
 // ─────────────────────── HTML BUILDERS ────────────────────────
@@ -1309,7 +1333,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37%; top: 32.5%; font-size: 14px;">পিন নম্বর</div>
         <div style="position: absolute; left: 55%; top: 32.5%; font-size: 14px;">${d.pin || ''}</div>
 
-        <div style="position: absolute; left: 37%; top: 35%; font-size: 14px;">ফরম নাম্বার</div>
+        <div style="position: absolute; left: 37%; top: 35%; font-size: 14px;">পূর্ববর্তী আইডি নাম্বার</div>
         <div style="position: absolute; left: 55%; top: 35%; font-size: 14px;">${d.oldNid || ''}</div>
 
         <!-- ✅ ১. ভোটার নাম্বার এর জায়গায় উপজেলা কোড -->
@@ -1347,12 +1371,13 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37%; top: 67.6%; font-size: 14px;">জন্মস্থান</div>
         <div style="position: absolute; left: 55%; top: 67.6%; font-size: 14px;">${d.birthPlace || ''}</div>
 
-        <!-- ✅ ৩. রক্তের গ্রুপ এর জায়গায় শিক্ষাগত যোগ্যতা -->
-        <div style="position: absolute; left: 37%; top: 70.3%; font-size: 14px;">শিক্ষাগত যোগ্যতা</div>
-        <div style="position: absolute; left: 55%; top: 70.3%; font-size: 14px;">${d.education || ''}</div>
+        <!-- ✅ ৩. শিক্ষাগত যোগ্যতার জায়গায় বয়স (ageBangla) -->
+        <div style="position: absolute; left: 37%; top: 70.3%; font-size: 14px;">বয়স</div>
+        <div style="position: absolute; left: 55%; top: 70.3%; font-size: 14px;">${d.ageBangla || calcAgeBangla(d.dob)}</div>
 
-        <div style="position: absolute; left: 37%; top: 72.8%; font-size: 14px;">পেশা</div>
-        <div style="position: absolute; left: 55%; top: 72.8%; font-size: 14px;">${d.occupation || ''}</div>
+        <!-- ✅ ৪. পেশার জায়গায় জন্মবার (birthDayBangla) -->
+        <div style="position: absolute; left: 37%; top: 72.8%; font-size: 14px;">জন্মবার</div>
+        <div style="position: absolute; left: 55%; top: 72.8%; font-size: 14px;">${d.birthDayBangla || calcBirthDayBangla(d.dob)}</div>
 
         <div style="position: absolute; left: 37%; top: 75.6%; font-size: 17px;"><b>বর্তমান ঠিকানা</b></div>
         <div style="position: absolute; left: 37%; top: 78.3%; width: 48%; font-size: 13px; text-align: left; white-space: normal;">${presentAddr}</div>
