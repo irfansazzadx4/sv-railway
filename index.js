@@ -30,6 +30,17 @@ const CONFIG = {
   SITE_BASE:       "https://dakhila-ldtax-gov-bd.rf.gd",
   ASSETS:          "http://onlinebd.duckdns.org",
 
+  // ✅ SV API গুলোর key এখন env থেকে (code এ আর hardcode নেই)
+  SV_API1_URL: process.env.SV_API1_URL || "https://onlinebd.duckdns.org/api_check.php",
+  SV_API1_KEY: process.env.SV_API1_KEY,
+  SV_API2_URL: process.env.SV_API2_URL,   // VIP API
+  SV_API2_KEY: process.env.SV_API2_KEY,
+
+  // ✅ VIP response GitHub এ user ভিত্তিক folder এ save করতে (ঐচ্ছিক) — PRIVATE repo ব্যবহার করুন
+  GITHUB_TOKEN:  process.env.GITHUB_TOKEN,
+  GITHUB_REPO:   process.env.GITHUB_REPO,   // "owner/repo"
+  GITHUB_BRANCH: process.env.GITHUB_BRANCH || "main",
+
   PDF_API_URL:    process.env.PDF_API_URL,
   PDF_API_SECRET: process.env.PDF_API_SECRET,
 
@@ -47,6 +58,7 @@ const USERS_FILE        = path.join(CONFIG.DATA_DIR, "users.json");
 const STATS_FILE        = path.join(CONFIG.DATA_DIR, "stats.json");
 const SETTINGS_FILE     = path.join(CONFIG.DATA_DIR, "settings.json");
 const TRANSACTIONS_FILE = path.join(CONFIG.DATA_DIR, "transactions.json"); // ✅ প্রতিটা job এর আলাদা log
+const RESPONSES_FILE    = path.join(CONFIG.DATA_DIR, "responses.json");    // ✅ VIP API response (২৪ ঘণ্টা)
 
 // ─────────────────────────── HELPERS ───────────────────────────
 const loadJSON = (f, def) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return def; } };
@@ -57,7 +69,7 @@ const saveUsers   = (u) => saveJSON(USERS_FILE,   u);
 const getStats    = () => loadJSON(STATS_FILE,    {});
 const saveStats   = (s) => saveJSON(STATS_FILE,   s);
 // ✅ svPrice যোগ হলো global settings এ
-const getSettings = () => loadJSON(SETTINGS_FILE, { cardPrice: 0, svPrice: 0 });
+const getSettings = () => loadJSON(SETTINGS_FILE, { cardPrice: 0, svPrice: 0, sv2Price: 0, svCost: 0, sv2Cost: 0 });
 const saveSettings= (s) => saveJSON(SETTINGS_FILE, s);
 const getTransactions  = () => loadJSON(TRANSACTIONS_FILE, []);  // ✅ job log
 const saveTransactions = (t) => saveJSON(TRANSACTIONS_FILE, t);
@@ -132,9 +144,36 @@ function getSVPriceForUser(number) {
   return getSettings().svPrice || 0;
 }
 
-// ✅ NEW: mode অনুযায়ী সঠিক price রিটার্ন করবে ("pdf" বা "sv")
+// ✅ SV2 (VIP API) এর জন্য আলাদা price (per-user override, না থাকলে global default sv2Price)
+function getSV2PriceForUser(number) {
+  const u = getUser(number);
+  if (u && u.sv2Price !== undefined && u.sv2Price !== null && u.sv2Price !== "") return u.sv2Price;
+  return getSettings().sv2Price || 0;
+}
+
+// mode: "pdf" | "sv" (SV1 API) | "sv2" (VIP API)
 function getPriceForUser(number, mode = "pdf") {
-  return mode === "sv" ? getSVPriceForUser(number) : getCardPriceForUser(number);
+  if (mode === "sv")  return getSVPriceForUser(number);
+  if (mode === "sv2") return getSV2PriceForUser(number);
+  return getCardPriceForUser(number);
+}
+
+function modeLabel(mode) {
+  return mode === "sv" ? "SV1" : mode === "sv2" ? "SV2 (VIP)" : "PDF";
+}
+
+// আমাদের নিজস্ব API খরচ (লাভের হিসাবের জন্য)
+function getApiCost(mode) {
+  const s = getSettings();
+  if (mode === "sv")  return s.svCost  || 0;
+  if (mode === "sv2") return s.sv2Cost || 0;
+  return 0;
+}
+
+// ✅ per-user SV1 / SV2 on-off (কিছু সেট না থাকলে ডিফল্টে চালু)
+function isApiEnabled(number, api) { // api: "sv1" | "sv2"
+  const u = getUser(number);
+  return !u || u[api + "Enabled"] !== false;
 }
 
 // ✅ UPDATED: mode-aware deduct — PDF আর SV আলাদাভাবে balance কাটবে
@@ -159,24 +198,25 @@ function recordStat(number) {
   saveStats(stats);
 }
 
-// ✅ NEW: প্রতিটা সফল job এর জন্য আলাদা log — কে, কখন, কোন mode/version, কত টাকা কাটলো
+// ✅ প্রতিটা সফল job এর আলাদা log — কে, কখন, কোন API/version, কত টাকা কাটলো, আমাদের API খরচ কত
 function recordTransaction(number, { mode, version, price, nid, name }) {
   const txs = getTransactions();
   txs.push({
-    number: normalizeNumber(number),
+    number:  normalizeNumber(number),
     mode:    mode    || "pdf",
     version: version || 0,
     price:   price   || 0,
+    cost:    getApiCost(mode), // ✅ আমাদের নিজস্ব API খরচ (লাভের হিসাবের জন্য)
     nid:     nid      || "",
     name:    name     || "",
     time:    new Date().toISOString(),
   });
-  // ✅ ফাইল যেন unlimited বড় না হয় — সর্বশেষ ৫০০০ টা entry রাখা হচ্ছে
+  // ফাইল যেন অসীম বড় না হয় — সর্বশেষ ৫০০০ টা entry
   if (txs.length > 5000) txs.splice(0, txs.length - 5000);
   saveTransactions(txs);
 }
 
-// ✅ NEW: টাকা কাটার পর card তৈরি fail করলে refund করার জন্য
+// টাকা কাটার পর card তৈরি fail করলে refund করার জন্য
 function refundBalance(number, amount) {
   if (!amount) return;
   const users = getUsers();
@@ -187,34 +227,41 @@ function refundBalance(number, amount) {
   }
 }
 
+// ✅ "আজ" এখন বাংলাদেশ সময় (Asia/Dhaka) অনুযায়ী — আগে UTC ছিল, তাই সকাল ৬টায় দিন বদলে যেত
+const dhakaDay = (d) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" });
 function isToday(isoTime) {
-  return isoTime && isoTime.slice(0, 10) === new Date().toISOString().slice(0, 10);
+  return !!isoTime && dhakaDay(isoTime) === dhakaDay(Date.now());
 }
 
-// ✅ NEW: একজন user এর সম্পূর্ণ history + today/total summary
+const sumBy = (arr, k) => arr.reduce((s, t) => s + (t[k] || 0), 0);
+
+// একজন user এর সম্পূর্ণ history + today/total summary
 function getUserTxSummary(number) {
-  const n   = normalizeNumber(number);
-  const all = getTransactions().filter(t => t.number === n);
+  const n     = normalizeNumber(number);
+  const all   = getTransactions().filter(t => t.number === n);
   const today = all.filter(t => isToday(t.time));
   return {
-    count:       all.length,
-    totalSpent:  all.reduce((s, t) => s + (t.price || 0), 0),
-    todayCount:  today.length,
-    todaySpent:  today.reduce((s, t) => s + (t.price || 0), 0),
-    list:        all.slice().reverse(), // সর্বশেষটা আগে
+    count:      all.length,
+    totalSpent: sumBy(all, "price"),
+    totalCost:  sumBy(all, "cost"),
+    todayCount: today.length,
+    todaySpent: sumBy(today, "price"),
+    todayCost:  sumBy(today, "cost"),
+    list:       all.slice().reverse(), // সর্বশেষটা আগে
   };
 }
 
-// ✅ NEW: আজকে কোন user কতটা কাজ করলো ও কত টাকা কাটলো — admin dashboard এর জন্য
+// আজকে কোন user কতটা কাজ করলো, কত টাকা কাটলো, আমাদের কত খরচ — admin dashboard এর জন্য
 function getTodayActivitySummary() {
   const txs   = getTransactions().filter(t => isToday(t.time));
   const users = getUsers();
   const map   = new Map();
   for (const t of txs) {
-    if (!map.has(t.number)) map.set(t.number, { number: t.number, jobs: 0, spent: 0 });
+    if (!map.has(t.number)) map.set(t.number, { number: t.number, jobs: 0, spent: 0, cost: 0 });
     const row = map.get(t.number);
     row.jobs++;
     row.spent += t.price || 0;
+    row.cost  += t.cost  || 0;
   }
   return [...map.values()]
     .map(r => ({ ...r, name: users.find(u => normalizeNumber(u.number) === r.number)?.name || "" }))
@@ -307,25 +354,28 @@ async function backupData() {
       saveToMongo("backups", "settings",     getSettings()),
       saveToMongo("backups", "transactions", getTransactions()), // ✅
       saveToMongo("backups", "svcache",      getSVCache()),      // ✅ যেন redeploy এর পরও cache হারিয়ে গিয়ে আবার API call না হয়
+      saveToMongo("backups", "responses",    getResponses()),    // ✅ VIP response
     ]);
   } catch (e) { console.error("Backup error:", e.message); }
 }
 
 async function restoreData() {
   try {
-    const [users, stats, settings, transactions, svcache] = await Promise.all([
+    const [users, stats, settings, transactions, svcache, responses] = await Promise.all([
       loadFromMongo("backups", "users"),
       loadFromMongo("backups", "stats"),
       loadFromMongo("backups", "settings"),
       loadFromMongo("backups", "transactions"), // ✅
       loadFromMongo("backups", "svcache"),      // ✅
+      loadFromMongo("backups", "responses"),    // ✅
     ]);
     if (users        && !fs.existsSync(USERS_FILE))        saveUsers(users);
     if (stats        && !fs.existsSync(STATS_FILE))        saveStats(stats);
     if (settings      && !fs.existsSync(SETTINGS_FILE))     saveSettings(settings);
     if (transactions && !fs.existsSync(TRANSACTIONS_FILE)) saveTransactions(transactions);
     if (svcache      && !fs.existsSync(SV_CACHE_FILE))      saveSVCache(svcache);
-    if (users || stats || settings || transactions || svcache) console.log("✅ Data restored from MongoDB");
+    if (responses    && !fs.existsSync(RESPONSES_FILE))     saveResponses(responses);
+    if (users || stats || settings || transactions || svcache || responses) console.log("✅ Data restored from MongoDB");
     else console.log("ℹ️ No MongoDB data — starting fresh");
   } catch (e) { console.error("Restore error:", e.message); }
 }
@@ -620,21 +670,46 @@ function setCachedSVData(nid, dob, data) {
   saveSVCache(cache);
 }
 
-// ── SV Mode: NID+DOB দিয়ে API থেকে data fetch ──
-async function fetchNIDFromSVApi(nid, dob) {
-  const url = `https://all-api.top/sv.php?key=arthurx4&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
-  
-  // ✅ API slow হলেও যেন ৩ মিনিট (১৮০,০০০ মি.সে.) অপেক্ষা করে
-  const res = await axios.get(url, { timeout: 180000 });
+// ═══════════════ SV PROVIDERS (adapter) ═══════════════
+// প্রতিটা provider { data, raw } ফেরত দেয় — data সবসময় একই ফরম্যাটে, তাই V1–V4 HTML builder এ হাত দিতে হয় না।
+// Error হলে err.kind = "timeout" | "notfound" | "failed"
+// ⚠️ কোনো provider এ auto-retry নেই — retry করলে ওপাশে আবার টোকেন কাটতে পারে।
+function svError(message, kind) {
+  const e = new Error(String(message || "API error").slice(0, 300));
+  e.kind = kind;
+  return e;
+}
+
+function classifyAxiosError(err) {
+  if (err.kind) return err;
+  const timeout = err.code === "ECONNABORTED" || err.code === "ETIMEDOUT" || /timeout/i.test(err.message || "");
+  const apiMsg  = err.response?.data?.message || err.response?.data?.error;
+  return svError(typeof apiMsg === "string" ? apiMsg : (err.message || "API error"), timeout ? "timeout" : "failed");
+}
+
+const cleanBlood = (b) => {
+  const s = String(b || "").trim();
+  return (s === "-" || s.toUpperCase() === "N/A") ? "" : s;
+};
+const todayBn = () => new Date().toLocaleDateString("bn-BD", { year: "numeric", month: "long", day: "numeric" });
+
+// ── SV1 (সস্তা API) ──
+async function fetchFromSV1(nid, dob) {
+  if (!CONFIG.SV_API1_KEY) throw svError("SV1 API key সেট করা নেই (SV_API1_KEY)", "failed");
+  const url = `${CONFIG.SV_API1_URL}?key=${encodeURIComponent(CONFIG.SV_API1_KEY)}&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
+
+  let res;
+  try {
+    res = await axios.get(url, { timeout: 180000 }); // ✅ slow হলেও ৩ মিনিট অপেক্ষা
+  } catch (e) { throw classifyAxiosError(e); }
 
   const raw = res.data;
   if (!raw || raw.success === false) {
-    throw new Error(raw?.message || raw?.error || "SV API থেকে data পাওয়া যায়নি।");
+    throw svError(raw?.message || raw?.error || "SV1 এ তথ্য পাওয়া যায়নি।", "notfound");
   }
 
   const d = raw["data-Info"] || raw.data || raw;
 
-  // ✅ Address Extraction Logic (String বা Object থেকে সঠিক ঠিকানা বের করা)
   let presentAddr = "";
   if (typeof d.preAddress === "string") presentAddr = d.preAddress;
   else if (d.preAddress?.addressLine) presentAddr = d.preAddress.addressLine;
@@ -649,44 +724,152 @@ async function fetchNIDFromSVApi(nid, dob) {
   else if (typeof d.permanentAddress === "string") permanentAddr = d.permanentAddress;
   else if (d.permanentAddress?.addressLine) permanentAddr = d.permanentAddress.addressLine;
 
-  // ✅ রক্তের গ্রুপ ফাঁকা বা '-' থাকলে খালি রাখার জন্য Logic
-  let blood = d.bloodGroup || d.blood_group || "";
-  if (blood === "-" || blood === "N/A" || blood.trim() === "") {
-    blood = "";
+  return {
+    raw,
+    data: {
+      nid:              d.nationalId  || d.nid          || nid,
+      pin:              d.pin         || "",
+      oldNid:           d.oldId       || d.formNo        || d.old_nid || "",
+      nameBangla:       d.nameBangla  || d.nameBn        || d.name_bn || "",
+      nameEnglish:      d.nameEnglish || d.nameEn        || d.name_en || "",
+      dob:              d.dateOfBirth || d.dob            || dob,
+      father:           d.fatherName  || d.father         || "",
+      mother:           d.motherName  || d.mother         || "",
+      spouse:           d.spouseName  || d.spouse         || "",
+      gender:           d.gender      || "",
+      religion:         d.religion    || "",
+      birthPlace:       d.birthPlace  || d.birth_place    || "",
+      bloodGroup:       cleanBlood(d.bloodGroup || d.blood_group),
+      occupation:       d.occupation  || "",
+      education:        d.education   || "",
+      voterArea:        d.voterArea   || d.voter_area     || "",
+      voterNo:          d.voterNo     || d.voterNumber    || d.voter_no || "",
+      voterAreaCode:    d.voterAreaCode || d.voter_area_code || "",
+      upazilaCode:      d.districtCode || d.upazilaCode   || "",
+      fatherNID:        d.fatherNID   || "",
+      motherNID:        d.motherNID   || "",
+      slNo:             d.slNo        || "",
+      presentAddress:   presentAddr,
+      permanentAddress: permanentAddr,
+      photo:            d.photo       || d.userIMG        || d.imageUrl12 || "",
+      ageBangla:        d.ageBangla      || "",
+      birthDayBangla:   d.birthDayBangla || "",
+      dateOfToday:      todayBn(),
+    },
+  };
+}
+
+// ── SV2 (VIP API) ──
+// ⚠️ VIP API এর আসল URL parameter নাম অন্য হলে শুধু এই function টা বদলান
+function buildSV2Url(nid, dob) {
+  return `${CONFIG.SV_API2_URL}?key=${encodeURIComponent(CONFIG.SV_API2_KEY)}&nid=${encodeURIComponent(nid)}&dob=${encodeURIComponent(dob)}`;
+}
+
+async function fetchFromSV2(nid, dob) {
+  if (!CONFIG.SV_API2_URL || !CONFIG.SV_API2_KEY) {
+    throw svError("SV2 API সেট করা নেই (SV_API2_URL / SV_API2_KEY)", "failed");
   }
 
+  let res;
+  try {
+    res = await axios.get(buildSV2Url(nid, dob), { timeout: 120000 });
+  } catch (e) { throw classifyAxiosError(e); }
+
+  const raw = res.data;
+  const d   = raw?.data?.data || raw?.data;
+  if (!raw || raw.status !== "success" || !d || !(d.nationalId || d.nameEn || d.name)) {
+    const msg = raw?.message || raw?.error || raw?.data?.message || "SV2 তেও তথ্য পাওয়া যায়নি।";
+    throw svError(typeof msg === "string" ? msg : "SV2 তেও তথ্য পাওয়া যায়নি।", "notfound");
+  }
+
+  const genderMap = { male: "পুরুষ", female: "মহিলা", other: "অন্যান্য" };
+  const addr = (a) => (typeof a === "string" ? a : (a?.addressLine || ""));
+
   return {
-    nid:              d.nationalId  || d.nid          || nid,
-    pin:              d.pin         || "",
-    oldNid:           d.oldId       || d.formNo        || d.old_nid || "",
-    nameBangla:       d.nameBangla  || d.nameBn        || d.name_bn || "",
-    nameEnglish:      d.nameEnglish || d.nameEn        || d.name_en || "",
-    dob:              d.dateOfBirth || d.dob            || dob,
-    father:           d.fatherName  || d.father         || "",
-    mother:           d.motherName  || d.mother         || "",
-    spouse:           d.spouseName  || d.spouse         || "",
-    gender:           d.gender      || "",
-    religion:         d.religion    || "",
-    birthPlace:       d.birthPlace  || d.birth_place    || "",
-    bloodGroup:       blood,
-    occupation:       d.occupation  || "",
-    education:        d.education   || "",
-    voterArea:        d.voterArea   || d.voter_area     || "",
-    voterNo:          d.voterNo     || d.voter_no       || "",
-    voterAreaCode:    d.voterAreaCode|| d.voter_area_code|| "",
-    upazilaCode:      d.districtCode || d.upazilaCode   || "",
-    fatherNID:        d.fatherNID   || "",
-    motherNID:        d.motherNID   || "",
-    slNo:             d.slNo        || "",
-    presentAddress:   presentAddr,
-    permanentAddress: permanentAddr,
-    photo:            d.photo       || d.userIMG        || d.imageUrl12 || "",
-    ageBangla:        d.ageBangla      || "", // ✅ V4 এর জন্য
-    birthDayBangla:   d.birthDayBangla || "", // ✅ V4 এর জন্য
-    dateOfToday:      new Date().toLocaleDateString("bn-BD", {
-      year: "numeric", month: "long", day: "numeric"
-    }),
+    raw, // ✅ হুবহু রেসপন্স — save করার জন্য
+    data: {
+      nid:              d.nationalId || nid,
+      pin:              d.pin || "",
+      oldNid:           d.oldNid || "",
+      nameBangla:       d.name || "",
+      nameEnglish:      d.nameEn || "",
+      dob:              d.dateOfBirth || dob,
+      father:           d.father || "",
+      mother:           d.mother || "",
+      spouse:           d.spouse || "",
+      gender:           genderMap[String(d.gender || "").toLowerCase()] || d.gender || "",
+      religion:         d.religion || "",
+      birthPlace:       d.birthPlace || "",
+      bloodGroup:       cleanBlood(d.bloodGroup),
+      occupation:       d.occupation || "",
+      education:        d.education || "",
+      voterArea:        d.voterArea || "",
+      voterNo:          d.voter_no || "",
+      voterAreaCode:    d.voter_area_code || "",
+      upazilaCode:      d.upazilaCode || "",
+      fatherNID:        "",
+      motherNID:        "",
+      slNo:             d.sl_no || "",
+      presentAddress:   addr(d.presentAddress),
+      permanentAddress: addr(d.permanentAddress),
+      photo:            d.photo || "",
+      ageBangla:        d.age || "",
+      birthDayBangla:   d.birthDay || "",
+      dateOfToday:      todayBn(),
+    },
   };
+}
+
+// ═══════════════ VIP RESPONSE SAVE (২৪ ঘণ্টা admin panel + ঐচ্ছিক GitHub) ═══════════════
+const RESPONSE_TTL_MS = 24 * 60 * 60 * 1000;
+const getResponses  = () => loadJSON(RESPONSES_FILE, []);
+const saveResponses = (r) => saveJSON(RESPONSES_FILE, r);
+
+function pruneResponses() {
+  const list  = getResponses();
+  const fresh = list.filter(r => Date.now() - new Date(r.time).getTime() < RESPONSE_TTL_MS);
+  if (fresh.length !== list.length) saveResponses(fresh);
+  return fresh;
+}
+
+// GitHub এ user এর নামে আলাদা folder: responses/<user-number>/<nid>_<provider>_<time>.json
+async function pushResponseToGitHub(number, nid, provider, raw) {
+  if (!CONFIG.GITHUB_TOKEN || !CONFIG.GITHUB_REPO) return;
+  const folder   = normalizeNumber(number);
+  const filePath = `responses/${folder}/${nid}_${provider}_${Date.now()}.json`;
+  await axios.put(
+    `https://api.github.com/repos/${CONFIG.GITHUB_REPO}/contents/${filePath}`,
+    {
+      message: `save ${provider} response for ${folder}`,
+      content: Buffer.from(JSON.stringify(raw, null, 2), "utf8").toString("base64"),
+      branch:  CONFIG.GITHUB_BRANCH,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${CONFIG.GITHUB_TOKEN}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "nid-bot",
+      },
+      timeout: 20000,
+    }
+  );
+}
+
+function saveRawResponse(number, nid, provider, raw) {
+  try {
+    const list = pruneResponses();
+    list.push({
+      id: crypto.randomBytes(6).toString("hex"),
+      number: normalizeNumber(number),
+      nid: String(nid || ""),
+      provider,
+      time: new Date().toISOString(),
+      raw,
+    });
+    saveResponses(list);
+    pushResponseToGitHub(number, nid, provider, raw)
+      .catch(e => console.error("GitHub save error:", e.response?.data?.message || e.message));
+  } catch (e) { console.error("saveRawResponse error:", e.message); }
 }
 
 // ✅ API তে ageBangla / birthDayBangla না থাকলে (পুরনো cache বা PDF mode) DOB থেকে নিজেই হিসাব করার fallback
@@ -1333,7 +1516,7 @@ function buildHTMLv4(d) {
         <div style="position: absolute; left: 37%; top: 32.5%; font-size: 14px;">পিন নম্বর</div>
         <div style="position: absolute; left: 55%; top: 32.5%; font-size: 14px;">${d.pin || ''}</div>
 
-        <div style="position: absolute; left: 37%; top: 35%; font-size: 14px;">পূর্ববর্তী আইডি নাম্বার</div>
+        <div style="position: absolute; left: 37%; top: 35%; font-size: 14px;">ফরম নাম্বার</div>
         <div style="position: absolute; left: 55%; top: 35%; font-size: 14px;">${d.oldNid || ''}</div>
 
         <!-- ✅ ১. ভোটার নাম্বার এর জায়গায় উপজেলা কোড -->
@@ -1519,7 +1702,7 @@ async function chargeAndProcess(from, data, version, msgId, mode = "pdf") {
   if (price > 0 && !deductBalance(from, mode)) {
     if (msgId) markRead(msgId);
     return sendText(from,
-      `❌ Balance কম! ${price} টাকা দরকার (${mode === "sv" ? "SV" : "PDF"})।\nBalance: ${getUserBalance(from)} টাকা`
+      `❌ Balance কম! ${price} টাকা দরকার (${modeLabel(mode)})।\nBalance: ${getUserBalance(from)} টাকা`
     );
   }
 
@@ -1533,6 +1716,133 @@ async function chargeAndProcess(from, data, version, msgId, mode = "pdf") {
     } else {
       await sendText(from, `❌ Error: ${e.message}\nআবার চেষ্টা করুন।`);
     }
+  }
+}
+
+// ─────────────────── SV REQUEST FLOW (SV1 → ঐচ্ছিক SV2) ───────────────────
+const pendingSV2 = new Map();
+const PENDING_SV2_TTL = 15 * 60 * 1000;
+
+async function sendSV2Choice(to, reason, price, balance) {
+  const body =
+    `⚠️ SV1 এ তথ্য পাওয়া যায়নি।\n` +
+    `📝 কারণ: ${String(reason || "").slice(0, 120)}\n\n` +
+    `SV2 (VIP) দিয়ে চেষ্টা করবেন?\n` +
+    `💰 খরচ: ${price} টাকা\n` +
+    `💳 আপনার Balance: ${balance} টাকা\n\n` +
+    `ℹ️ তথ্য পেলে তবেই টাকা কাটা হবে।`;
+  try {
+    await axios.post(`${WA_BASE()}/messages`, {
+      messaging_product: "whatsapp", to, type: "interactive",
+      interactive: {
+        type: "button",
+        body: { text: body },
+        action: { buttons: [
+          { type: "reply", reply: { id: "sv2_yes", title: "✅ হ্যাঁ, SV2" } },
+          { type: "reply", reply: { id: "sv2_no",  title: "❌ না" } },
+        ] },
+      },
+    }, { headers: WA_HEADERS() });
+  } catch (e) {
+    console.error("sendSV2Choice error:", e.response?.data || e.message);
+    await sendText(to, body + `\n\nবাটন পাঠানো যায়নি। লিখুন: *.sv2 yes* অথবা *.sv2 no*`);
+  }
+}
+
+async function runSV2(from, nid, dob, version) {
+  const price = getPriceForUser(from, "sv2");
+  if (price > 0 && getUserBalance(from) < price) {
+    return sendText(from, `❌ Balance কম! SV2 এর জন্য ${price} টাকা দরকার।\nBalance: ${getUserBalance(from)} টাকা`);
+  }
+
+  const cached = getCachedSVData(nid, dob);
+  if (cached) {
+    await sendText(from, "⚠️ এই NID + জন্ম তারিখের তথ্য আগেই fetch করা আছে। টোকেন বাঁচাতে আবার API call না করে আগের তথ্য থেকেই কার্ড বানানো হচ্ছে।");
+    return chargeAndProcess(from, cached.data, version, null, "sv2");
+  }
+
+  await sendText(from, `⏳ SV2 (VIP) দিয়ে তথ্য fetch হচ্ছে...${price > 0 ? ` (সফল হলে ${price} টাকা কাটা হবে)` : ""}`);
+
+  try {
+    const { data, raw } = await fetchFromSV2(nid, dob);
+    saveRawResponse(from, data.nid || nid, "sv2", raw); // ✅ হুবহু রেসপন্স save
+    setCachedSVData(nid, dob, data);
+    return chargeAndProcess(from, data, version, null, "sv2");
+  } catch (err) {
+    console.error("SV2 error:", err.kind, err.message);
+    if (err.kind === "timeout") {
+      return sendText(from,
+        "⏱️ SV2 API সময়মতো উত্তর দেয়নি।\n⚠️ ওপাশে টোকেন কেটে থাকতে পারে, তাই স্বয়ংক্রিয়ভাবে আবার চেষ্টা করা হয়নি। আপনার টাকা কাটা হয়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।"
+      );
+    }
+    return sendText(from, `❌ SV2 Error: ${err.message}\n💰 আপনার টাকা কাটা হয়নি।`);
+  }
+}
+
+async function confirmSV2(from) {
+  const key = normalizeNumber(from);
+  const p   = pendingSV2.get(key);
+  pendingSV2.delete(key); // ✅ আগেই মুছে ফেলা হচ্ছে — ডাবল ক্লিকে ডাবল চার্জ ঠেকাতে
+
+  if (!p || Date.now() - p.timestamp > PENDING_SV2_TTL) {
+    return sendText(from, "❌ Expired! আবার NID + জন্ম তারিখ পাঠান।");
+  }
+  if (!isAllowed(from))                return sendText(from, "❌ আপনি authorized নন।");
+  if (!isApiEnabled(from, "sv2"))      return sendText(from, "❌ SV2 আপনার জন্য বন্ধ আছে। Admin এর সাথে যোগাযোগ করুন।");
+  return runSV2(from, p.nid, p.dob, p.version);
+}
+
+async function handleSVRequest(from, nid, dob) {
+  const s1 = isApiEnabled(from, "sv1");
+  const s2 = isApiEnabled(from, "sv2");
+  if (!s1 && !s2) {
+    return sendText(from, "❌ SV Service আপনার জন্য বন্ধ আছে। Admin এর সাথে যোগাযোগ করুন।");
+  }
+
+  const version   = getUserDefaultVersion(from) || 4;
+  const firstMode = s1 ? "sv" : "sv2";
+  const price     = getPriceForUser(from, firstMode);
+
+  if (price > 0 && getUserBalance(from) < price) {
+    return sendText(from, `❌ Balance কম! ${price} টাকা দরকার (${modeLabel(firstMode)})।\nBalance: ${getUserBalance(from)} টাকা`);
+  }
+
+  // ✅ একই NID+DOB আগে একবার সফল হলে আবার কোনো API call নয় (দুই API এর জন্য এক cache)
+  const cached = getCachedSVData(nid, dob);
+  if (cached) {
+    await sendText(from, "⚠️ এই NID + জন্ম তারিখের তথ্য আগেই একবার fetch করা হয়েছিল। টোকেন বাঁচাতে আবার API call না করে আগের তথ্য থেকেই কার্ড বানানো হচ্ছে।");
+    return chargeAndProcess(from, cached.data, version, null, firstMode);
+  }
+
+  if (!s1) return runSV2(from, nid, dob, version); // শুধু SV2 চালু থাকলে
+
+  await sendText(from, "⏳ SV Service: NID তথ্য fetch হচ্ছে...");
+
+  try {
+    const { data } = await fetchFromSV1(nid, dob);
+    setCachedSVData(nid, dob, data);
+    return chargeAndProcess(from, data, version, null, "sv");
+  } catch (err) {
+    console.error("SV1 error:", err.kind, err.message);
+
+    // ✅ timeout হলে SV2 তে নিজে থেকে পাঠানো হয় না (টোকেন কেটে থাকতে পারে)
+    if (err.kind === "timeout") {
+      return sendText(from,
+        "⏱️ SV1 API সময়মতো উত্তর দেয়নি।\n⚠️ ওপাশে টোকেন কেটে থাকতে পারে, তাই স্বয়ংক্রিয়ভাবে আবার চেষ্টা বা SV2 তে পাঠানো হয়নি। আপনার টাকা কাটা হয়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।"
+      );
+    }
+    if (!s2) return sendText(from, `❌ SV Error: ${err.message}\nআবার চেষ্টা করুন।`);
+
+    const p2 = getPriceForUser(from, "sv2");
+    if (p2 > 0 && getUserBalance(from) < p2) {
+      return sendText(from,
+        `❌ SV1 এ তথ্য পাওয়া যায়নি (${err.message}).\nSV2 (VIP) এ চেষ্টা করতে ${p2} টাকা লাগবে, কিন্তু আপনার Balance ${getUserBalance(from)} টাকা। রিচার্জ করে আবার পাঠান।`
+      );
+    }
+
+    // ✅ user কে জিজ্ঞেস করা — জেনেশুনে বেশি টাকা দেবে কিনা
+    pendingSV2.set(normalizeNumber(from), { nid, dob, version, timestamp: Date.now() });
+    return sendSV2Choice(from, err.message, p2, getUserBalance(from));
   }
 }
 
@@ -1550,11 +1860,22 @@ async function handleIncoming(msg, contact) {
     if (text === ".sv" || text === "/sv") {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      if (!isApiEnabled(from, "sv1") && !isApiEnabled(from, "sv2")) {
+        return sendText(from, "❌ SV Service আপনার জন্য বন্ধ আছে। Admin এর সাথে যোগাযোগ করুন।");
+      }
       setUserServiceMode(from, "sv");
       setUserDefaultVersion(from, 4); // ✅ Auto select Version 4
       return sendText(from,
         "✅ *SV Service Activated! (Default Layout: V4)*\n\nএখন থেকে সরাসরি NID ও DOB পাঠালেই Version 4 কার্ড তৈরি হবে।\n\nউদাহরণ:\n`1234567890 1990-01-01`\n\nবন্ধ করতে পাঠান: *.sv off*"
       );
+    }
+
+    // বাটন কাজ না করলে text দিয়ে SV2 confirm
+    if (text === ".sv2 yes") { markRead(msgId); return confirmSV2(from); }
+    if (text === ".sv2 no")  {
+      markRead(msgId);
+      pendingSV2.delete(normalizeNumber(from));
+      return sendText(from, "ঠিক আছে, SV2 তে চেষ্টা বাতিল করা হয়েছে।");
     }
 
     if (text === ".sv off" || text === "/sv off") {
@@ -1603,14 +1924,14 @@ async function handleIncoming(msg, contact) {
     }
 
     // ── SV Mode: NID DOB auto-detection ──
-    // ✅ এখন যেকোনো ফরম্যাট সাপোর্ট করে: 2004-02-31, 2004/02/31, 31/02/2004, 31.02.2004, 31-02-2004, "31 January 2004"
+    // যেকোনো ফরম্যাট: 2004-02-31, 2004/02/31, 31/02/2004, 31.02.2004, 31-02-2004, "31 January 2004"
     const svMatch = rawText.trim().match(/^(\d{10,17})\s+(\d{1,4}[\/.\-]\d{1,2}[\/.\-]\d{1,4}|\d{1,2}\s+[a-zA-Z]+\s+\d{4})$/);
     if (svMatch && getUserServiceMode(from) === "sv") {
       markRead(msgId);
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
 
       const nidInputRaw   = svMatch[1];
-      const dobNormalized = normalizeDOB(svMatch[2]); // ✅ যেকোনো ফরম্যাট থেকে YYYY-MM-DD এ convert
+      const dobNormalized = normalizeDOB(svMatch[2]); // যেকোনো ফরম্যাট → YYYY-MM-DD
 
       if (!dobNormalized) {
         return sendText(from,
@@ -1618,41 +1939,10 @@ async function handleIncoming(msg, contact) {
         );
       }
 
-      // ✅ পুরনো 13-digit NID হলে DOB এর জন্ম সাল (৪ ডিজিট) সামনে বসিয়ে ১৭ ডিজিট বানানো হচ্ছে
-      let nidForApi = nidInputRaw;
-      if (nidInputRaw.length === 13) {
-        nidForApi = dobNormalized.slice(0, 4) + nidInputRaw;
-      }
+      // পুরনো 13-digit NID হলে জন্ম সাল সামনে বসিয়ে ১৭ ডিজিট
+      const nidForApi = nidInputRaw.length === 13 ? dobNormalized.slice(0, 4) + nidInputRaw : nidInputRaw;
 
-      const price = getPriceForUser(from, "sv"); // ✅ SV mode price
-
-      if (price > 0 && getUserBalance(from) < price) {
-        return sendText(from, `❌ Balance কম! ${price} টাকা দরকার (SV)।\nBalance: ${getUserBalance(from)} টাকা`);
-      }
-
-      // ✅ একই NID+DOB আগে একবার সফল হয়ে থাকলে আবার API call হবে না (token বাঁচাতে) — warning দিয়ে cache থেকে পাঠানো হবে
-      const cached = getCachedSVData(nidForApi, dobNormalized);
-      if (cached) {
-        const version = getUserDefaultVersion(from) || 4;
-        await sendText(from,
-          "⚠️ এই NID + জন্ম তারিখের তথ্য আগেই একবার fetch করা হয়েছিল। টোকেন বাঁচাতে আবার API call না করে আগের তথ্য থেকেই কার্ড বানানো হচ্ছে।"
-        );
-        return chargeAndProcess(from, cached.data, version, null, "sv");
-      }
-
-      await sendText(from, "⏳ SV Service: NID তথ্য fetch হচ্ছে...");
-
-      try {
-        const data    = await fetchNIDFromSVApi(nidForApi, dobNormalized);
-        const version = getUserDefaultVersion(from) || 4;
-
-        setCachedSVData(nidForApi, dobNormalized, data); // ✅ পরের বার একই NID+DOB এলে আর API call হবে না
-
-        return chargeAndProcess(from, data, version, null, "sv"); // ✅ deduct + process + fail হলে auto-refund
-      } catch (err) {
-        console.error("SV API error:", err.message);
-        return sendText(from, `❌ SV Error: ${err.message}\nআবার চেষ্টা করুন।`);
-      }
+      return handleSVRequest(from, nidForApi, dobNormalized);
     }
 
     if (text.startsWith(".setversion") || text.startsWith("setversion")) {
@@ -1693,11 +1983,14 @@ async function handleIncoming(msg, contact) {
       if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
       const bal    = getUserBalance(from);
       const cardP  = getCardPriceForUser(from);
-      const svP    = getSVPriceForUser(from); // ✅ SV price দেখানো
+      const svP    = getSVPriceForUser(from);
+      const sv2P   = getSV2PriceForUser(from);
+      const s1on   = isApiEnabled(from, "sv1") ? "চালু" : "বন্ধ";
+      const s2on   = isApiEnabled(from, "sv2") ? "চালু" : "বন্ধ";
       const defVer = getUserDefaultVersion(from);
       const svMode = getUserServiceMode(from);
       return sendText(from,
-        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price (PDF): ${cardP} টাকা\n🔧 SV Price: ${svP} টাকা\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*`
+        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price (PDF): ${cardP} টাকা\n🔧 SV1 Price: ${svP} টাকা (${s1on})\n💎 SV2 (VIP) Price: ${sv2P} টাকা (${s2on})\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*`
       );
     }
 
@@ -1735,6 +2028,15 @@ async function handleIncoming(msg, contact) {
 
   if (msg.type === "interactive" && msg.interactive?.type === "button_reply") {
     const buttonId = msg.interactive.button_reply.id;
+
+    // ✅ SV2 (VIP) confirm বাটন — PDF এর pending check এর আগেই হ্যান্ডেল করতে হবে
+    if (buttonId === "sv2_yes") { markRead(msgId); return confirmSV2(from); }
+    if (buttonId === "sv2_no")  {
+      markRead(msgId);
+      pendingSV2.delete(normalizeNumber(from));
+      return sendText(from, "ঠিক আছে, SV2 তে চেষ্টা বাতিল করা হয়েছে।");
+    }
+
     const pending  = getPending(from);
 
     if (!pending) { markRead(msgId); return sendText(from, "❌ Expired! আবার PDF পাঠান।"); }
@@ -1829,15 +2131,127 @@ function adminAuth(req, res, next) {
   res.redirect("/admin/login");
 }
 
-app.get("/admin/login", (_, res) => {
-  res.send(`<html><body style="font-family:sans-serif;max-width:400px;margin:80px auto;padding:30px;background:#f5f5f5;border-radius:8px;">
-    <h2>🔐 Admin Login</h2>
-    <form method="POST" action="/admin/login">
-      <input name="password" type="password" placeholder="Password" style="width:100%;padding:10px;margin:10px 0;" required/>
-      <button style="width:100%;padding:10px;background:#0078d4;color:#fff;border:0;border-radius:4px;cursor:pointer;">Login</button>
-    </form>
-  </body></html>`);
-});
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtTime = (iso) => iso
+  ? new Date(iso).toLocaleString("en-GB", { timeZone: "Asia/Dhaka", hour12: true, dateStyle: "short", timeStyle: "short" })
+  : "—";
+const backTo = (res, number) => res.redirect(number ? `/admin#u-${normalizeNumber(number)}` : "/admin");
+
+const ADMIN_CSS = `<style>
+:root{--bg:#0a0f1f;--panel:#111833;--panel2:#18214a;--line:#252f5c;--text:#eaeeff;--mut:#8b96c6;--acc:#7c5cff;--acc2:#22d3ee;--ok:#34d399;--bad:#fb7185;--warn:#fbbf24}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Bengali',sans-serif;color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%;
+ background:radial-gradient(1100px 560px at 8% -10%,#1b2460 0%,transparent 60%),radial-gradient(900px 480px at 100% 0%,#2a1b60 0%,transparent 55%),var(--bg)}
+a{color:var(--acc2);text-decoration:none}
+.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:rgba(10,15,31,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand i{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:inline-grid;place-items:center;font-style:normal;font-size:15px}
+.top nav{display:flex;gap:4px;overflow-x:auto}
+.top nav a{padding:7px 12px;border-radius:10px;color:var(--mut);font-size:13px;font-weight:600;white-space:nowrap}
+.top nav a.on,.top nav a:hover{background:var(--panel2);color:var(--text)}
+.wrap{max-width:1240px;margin:0 auto;padding:18px 14px 70px}
+h2.sec{font-size:12px;letter-spacing:1.1px;text-transform:uppercase;color:var(--mut);margin:28px 2px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h2.sec span{letter-spacing:0;text-transform:none;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:14px}
+.stat .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.stat .v{font-size:24px;font-weight:800;margin-top:4px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+input,select,textarea{width:100%;background:#0c1330;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-size:14px;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+label.f{display:block;font-size:11px;color:var(--mut);margin:0 0 4px 2px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-block;text-align:center;border:0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;background:var(--acc);font-family:inherit;white-space:nowrap}
+.btn.ok{background:var(--ok);color:#052e1b}
+.btn.bad{background:var(--bad);color:#3b0a14}
+.btn.warn{background:var(--warn);color:#3a2a00}
+.btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.btn.sm{padding:8px 11px;font-size:12px}
+.sum{cursor:pointer;font-weight:700;list-style:none;font-size:14px}
+.sum::-webkit-details-marker{display:none}
+details.card[open]>.sum{margin-bottom:14px}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.on{background:#0b3b2b;color:var(--ok)}
+.pill.off{background:#3b0f1a;color:var(--bad)}
+.pill.pdf{background:#14284d;color:#7cb4ff}
+.pill.sv{background:#3a2d08;color:var(--warn)}
+.pill.sv2{background:#2d1a5c;color:#b9a2ff}
+/* users */
+.users{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.u{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px;scroll-margin-top:70px}
+.u.off{opacity:.62}
+.uh{display:flex;gap:10px;align-items:center}
+.av{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-weight:800;flex:none}
+.uh .n{font-weight:700;font-size:15px;word-break:break-word}
+.uh .p{font-size:12px;color:var(--mut)}
+.uh .pill{margin-left:auto}
+.bal{display:flex;align-items:center;justify-content:space-between;background:#0c1330;border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.bal b{font-size:26px}
+.bal small{color:var(--mut);font-size:11px}
+.money{display:grid;gap:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+.go{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sws{display:flex;gap:6px}
+.sws form{flex:1}
+.sw{width:100%;border:1px solid var(--line);background:#0c1330;color:var(--mut);padding:9px 8px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.sw.on{background:#0b3b2b;border-color:#14684b;color:var(--ok)}
+.sw.off{background:#3b0f1a;border-color:#6d1a2c;color:var(--bad)}
+details.m summary{cursor:pointer;list-style:none;padding:9px 12px;border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700;text-align:center}
+details.m summary::-webkit-details-marker{display:none}
+details.m[open] summary{margin-bottom:12px}
+.stack{display:grid;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+/* lists & tables */
+.li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .a{font-weight:700}
+.li .b{font-size:12px;color:var(--mut)}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+th{text-align:left;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid var(--line)}
+.code{background:#0c1330;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-all}
+.muted{color:var(--mut);font-size:12px}
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.login .card{width:100%;max-width:360px}
+.err{color:var(--bad);font-size:13px;margin-bottom:10px}
+@media(max-width:600px){
+ .wrap{padding:12px 10px 70px}
+ .users{grid-template-columns:1fr}
+ .stat .v{font-size:20px}
+ .brand span{display:none}
+}
+</style>`;
+
+function adminPage(title, body, active = "home") {
+  return `<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>${ADMIN_CSS}</head><body>
+<header class="top">
+  <div class="brand"><i>◈</i><span>NID Hub</span></div>
+  <nav>
+    <a class="${active === "home" ? "on" : ""}" href="/admin">📊 Dashboard</a>
+    <a class="${active === "resp" ? "on" : ""}" href="/admin/responses">🗂 Responses</a>
+    <a href="/admin/logout">🚪 Logout</a>
+  </nav>
+</header>
+<main class="wrap">${body}</main>
+</body></html>`;
+}
+
+const loginPage = (err) => `<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Login</title>${ADMIN_CSS}</head><body>
+<div class="login"><div class="card">
+  <div class="brand" style="font-size:20px;margin-bottom:18px"><i>◈</i><span style="display:inline">NID Hub</span></div>
+  ${err ? `<p class="err">❌ ভুল পাসওয়ার্ড</p>` : ""}
+  <form method="POST" action="/admin/login">
+    <input name="password" type="password" placeholder="Admin password" required autofocus/>
+    <button class="btn" style="width:100%;margin-top:10px">লগইন →</button>
+  </form>
+</div></div></body></html>`;
+
+app.get("/admin/login", (_, res) => res.send(loginPage(false)));
 
 app.post("/admin/login", (req, res) => {
   if (req.body.password === CONFIG.ADMIN_PASS) {
@@ -1846,7 +2260,7 @@ app.post("/admin/login", (req, res) => {
     res.setHeader("Set-Cookie", `admin_sess=${tok}; HttpOnly; Path=/; Max-Age=86400`);
     return res.redirect("/admin");
   }
-  res.send("❌ Wrong password. <a href='/admin/login'>Try again</a>");
+  res.send(loginPage(true));
 });
 
 app.get("/admin/logout", (req, res) => {
@@ -1856,229 +2270,302 @@ app.get("/admin/logout", (req, res) => {
   res.redirect("/admin/login");
 });
 
+const statBox = (label, value, color) =>
+  `<div class="stat"><div class="l">${label}</div><div class="v"${color ? ` style="color:${color}"` : ""}>${value}</div></div>`;
+
+const modePill = (mode) => `<span class="pill ${esc(mode)}">${esc(modeLabel(mode))}</span>`;
+
+// ── Dashboard ──
 app.get("/admin", adminAuth, (req, res) => {
   const users    = getUsers();
   const stats    = getStats();
   const settings = getSettings();
-  const today    = getTodayActivitySummary(); // ✅ আজকে কে কত কাজ করলো / কত টাকা কাটলো
+  const today    = getTodayActivitySummary();
 
-  const rows = users.map(u => {
-    const s   = stats[normalizeNumber(u.number)] || { count: 0, lastUsed: "—" };
-    const def     = u.defaultVersion > 0 ? `V${u.defaultVersion}` : "—";
-    const svcMode = u.serviceMode === "sv"
-      ? `<span style="background:#fff3cd;color:#856404;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold">SV</span>`
-      : `<span style="color:#999;font-size:11px">PDF</span>`;
-    return `<tr>
-       <td>${u.number}</td>
-       <td>${u.name || "—"}</td>
-      <td style="color:${(u.balance||0) < 0 ? 'red':'green'};font-weight:bold">${u.balance||0} ৳</td>
-      <td>${u.price !== undefined && u.price !== null && u.price !== "" ? `${u.price} ৳` : `<span style="color:#888">default</span>`}</td>
-      <td>${u.svPrice !== undefined && u.svPrice !== null && u.svPrice !== "" ? `${u.svPrice} ৳` : `<span style="color:#888">default</span>`}</td>
-       <td>${u.active !== false ? "✅":"❌"}</td>
-      <td style="font-weight:bold;color:#0078d4">${def}</td>
-      <td>${svcMode}</td>
-       <td>${s.count}</td>
-      <td style="font-size:11px">${s.lastUsed||"—"}</td>
-       <td>
-        <form method="POST" action="/admin/recharge" style="display:inline;white-space:nowrap">
-          <input type="hidden" name="number" value="${u.number}"/>
-          <input name="amount" placeholder="টাকা" type="number" style="width:65px;padding:3px" required/>
-          <button name="type" value="add"    style="background:#28a745;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">+Add</button>
-          <button name="type" value="remove" style="background:#dc3545;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">-Remove</button>
-        </form>
-        <form method="POST" action="/admin/setprice" style="display:inline;white-space:nowrap">
-          <input type="hidden" name="number" value="${u.number}"/>
-          <input name="price" placeholder="PDF ৳" type="number" value="${u.price ?? ''}" style="width:65px;padding:3px"/>
-          <button style="background:#f59e0b;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">Set</button>
-        </form>
-        <form method="POST" action="/admin/setsvprice" style="display:inline;white-space:nowrap">
-          <input type="hidden" name="number" value="${u.number}"/>
-          <input name="svPrice" placeholder="SV ৳" type="number" value="${u.svPrice ?? ''}" style="width:65px;padding:3px"/>
-          <button style="background:#0891b2;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">Set SV</button>
-        </form>
-        <form method="POST" action="/admin/setversion" style="display:inline;white-space:nowrap">
-          <input type="hidden" name="number" value="${u.number}"/>
-          <select name="version" style="padding:3px">
-            <option value="0" ${!u.defaultVersion||u.defaultVersion===0?'selected':''}>Auto</option>
-            <option value="1" ${u.defaultVersion===1?'selected':''}>V1</option>
-            <option value="2" ${u.defaultVersion===2?'selected':''}>V2</option>
-            <option value="3" ${u.defaultVersion===3?'selected':''}>V3</option>
-          <option value="4" ${u.defaultVersion===4?'selected':''}>V4</option>
-          </select>
-          <button style="padding:4px 8px;cursor:pointer">Set</button>
-        </form>
-        <form method="POST" action="/admin/toggle" style="display:inline">
-          <input type="hidden" name="number" value="${u.number}"/>
-          <button style="padding:4px 8px;cursor:pointer">Toggle</button>
-        </form>
-        <form method="POST" action="/admin/delete" style="display:inline">
-          <input type="hidden" name="number" value="${u.number}"/>
-          <button onclick="return confirm('Delete?')" style="background:#dc3545;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer">🗑️</button>
-        </form>
-        <a href="/admin/user/${u.number}" style="background:#6366f1;color:#fff;border:0;padding:4px 8px;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-block">📋 History</a>
-       </td>
-     </tr>`;
-  }).join("");
+  const todayJobs  = today.reduce((s, r) => s + r.jobs, 0);
+  const todayRev   = today.reduce((s, r) => s + r.spent, 0);
+  const todayCost  = today.reduce((s, r) => s + r.cost, 0);
+  const todayProfit = todayRev - todayCost;
+  const totalBal   = users.reduce((s, u) => s + (u.balance || 0), 0);
+  const activeCnt  = users.filter(u => u.active !== false).length;
 
-  // ✅ আজকের কাজের summary rows — ke koyta kaj korlo ar koto tk katlo
-  const todayRows = today.map(r => `<tr>
-      <td>${r.number}</td>
-      <td>${r.name || "—"}</td>
-      <td><span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:12px;font-weight:bold">${r.jobs}</span></td>
-      <td style="color:#dc2626;font-weight:bold">${r.spent} ৳</td>
-      <td><a href="/admin/user/${r.number}" style="color:#6366f1">বিস্তারিত →</a></td>
-    </tr>`).join("") || `<tr><td colspan="5" style="text-align:center;padding:15px;color:#888">আজকে এখনো কেউ কাজ করেনি</td></tr>`;
+  const mongoOK = !!CONFIG.MONGO_URI;
+  const ghOK    = !!(CONFIG.GITHUB_TOKEN && CONFIG.GITHUB_REPO);
+  const sv1OK   = !!CONFIG.SV_API1_KEY;
+  const sv2OK   = !!(CONFIG.SV_API2_URL && CONFIG.SV_API2_KEY);
 
-  const todayTotalJobs  = today.reduce((s, r) => s + r.jobs, 0);
-  const todayTotalSpent = today.reduce((s, r) => s + r.spent, 0);
+  const swForm = (num, api, on, label) => `
+    <form method="POST" action="/admin/toggleapi">
+      <input type="hidden" name="number" value="${esc(num)}"/><input type="hidden" name="api" value="${api}"/>
+      <button class="sw ${on ? "on" : "off"}">${label}: ${on ? "ON" : "OFF"}</button>
+    </form>`;
 
-  const pendingList = [...pendingChoices.entries()]
-    .map(([num, p]) => `<li>${num} — ${p.data.nameBangla || "?"} (NID: ${p.data.nid || "?"})</li>`)
-    .join("") || "<li>কেউ নেই</li>";
+  const userCard = (u) => {
+    const num   = u.number;
+    const bal   = u.balance || 0;
+    const s     = stats[normalizeNumber(num)] || { count: 0, lastUsed: null };
+    const on    = u.active !== false;
+    const sv1   = u.sv1Enabled !== false;
+    const sv2   = u.sv2Enabled !== false;
+    const pv    = (v) => (v !== undefined && v !== null && v !== "") ? v : "";
+    const ini   = esc(((u.name || num) + "").trim().charAt(0).toUpperCase() || "#");
+    const svTag = u.serviceMode === "sv" ? `<span class="pill sv">SV Mode</span>` : "";
 
-  res.send(`<html><head><style>
-    body{font-family:sans-serif;max-width:1300px;margin:30px auto;padding:20px}
-    table{width:100%;border-collapse:collapse;margin:15px 0}
-    th,td{border:1px solid #ddd;padding:7px;text-align:left;font-size:12px}
-    th{background:#0078d4;color:#fff}
-    .card{background:#f9f9f9;padding:15px;margin:10px 0;border-radius:6px;border:1px solid #ddd}
-    tr:hover{background:#f5f5f5}
-    textarea{width:100%;padding:8px;font-family:inherit;font-size:13px;box-sizing:border-box}
-  </style></head><body>
-    <h1>📊 NID Bot Admin Panel</h1>
-    <div style="text-align:right"><a href="/admin/logout">Logout</a></div>
+    return `
+    <div class="u ${on ? "" : "off"}" id="u-${esc(normalizeNumber(num))}" data-q="${esc(((u.name || "") + " " + num).toLowerCase())}">
+      <div class="uh">
+        <div class="av">${ini}</div>
+        <div><div class="n">${esc(u.name || "নাম নেই")}</div><div class="p">${esc(num)}</div></div>
+        <span class="pill ${on ? "on" : "off"}">${on ? "Active" : "Off"}</span>
+      </div>
 
-    <div class="card">
-      <h3>⚙️ Settings</h3>
-      <form method="POST" action="/admin/settings">
-        PDF Card Price (৳): <input name="cardPrice" value="${settings.cardPrice||0}" style="width:80px" type="number"/>
-        SV Service Price (৳): <input name="svPrice" value="${settings.svPrice||0}" style="width:80px" type="number"/>
-        <button>Save</button>
+      <div class="bal">
+        <div><small>BALANCE</small><br><b style="color:${bal < 0 ? "var(--bad)" : "var(--ok)"}">${bal} ৳</b></div>
+        <div style="text-align:right"><small>মোট কার্ড: <b style="font-size:13px">${s.count}</b></small><br><small>${fmtTime(s.lastUsed)}</small><br>${svTag}</div>
+      </div>
+
+      <form class="money" method="POST" action="/admin/recharge">
+        <input type="hidden" name="number" value="${esc(num)}"/>
+        <input name="amount" type="number" inputmode="decimal" min="1" step="any" placeholder="টাকার পরিমাণ লিখুন" required/>
+        <div class="chips">${[50, 100, 200, 500, 1000].map(a => `<button type="button" class="chip" onclick="this.closest('form').amount.value=${a}">${a}</button>`).join("")}</div>
+        <div class="go">
+          <button class="btn ok" name="type" value="add">＋ টাকা যোগ</button>
+          <button class="btn bad" name="type" value="remove" onclick="return confirm('${esc(num)} এর balance থেকে টাকা কাটবেন?')">－ টাকা কাটুন</button>
+        </div>
       </form>
-      <p style="font-size:12px;color:#666;margin-top:6px">যেসব user এর Custom Price সেট করা নেই, তারা এই default price ব্যবহার করবে। PDF আর SV mode এর price সম্পূর্ণ আলাদাভাবে কাজ করবে।</p>
-    </div>
 
-    <div class="card">
-      <h3>📅 আজকের কাজের হিসাব <span style="font-size:12px;color:#666;font-weight:400">(মোট ${todayTotalJobs} টা কাজ, ${todayTotalSpent} ৳ কাটা হয়েছে)</span></h3>
-      <table>
-        <tr><th>Number</th><th>Name</th><th>আজ কাজ</th><th>আজ কাটা</th><th></th></tr>
-        ${todayRows}
-      </table>
-    </div>
+      <div class="sws">${swForm(num, "sv1", sv1, "SV1")}${swForm(num, "sv2", sv2, "SV2 VIP")}</div>
 
-    <div class="card">
-      <h3>📢 Broadcast Message (সব active user কে)</h3>
+      <details class="m">
+        <summary>⚙️ আরও সেটিং</summary>
+        <div class="stack">
+          <form method="POST" action="/admin/setprices">
+            <input type="hidden" name="number" value="${esc(num)}"/>
+            <div class="row3">
+              <div><label class="f">PDF ৳</label><input name="price"    type="number" step="any" value="${pv(u.price)}"    placeholder="${settings.cardPrice || 0}"/></div>
+              <div><label class="f">SV1 ৳</label><input name="svPrice"  type="number" step="any" value="${pv(u.svPrice)}"  placeholder="${settings.svPrice || 0}"/></div>
+              <div><label class="f">SV2 ৳</label><input name="sv2Price" type="number" step="any" value="${pv(u.sv2Price)}" placeholder="${settings.sv2Price || 0}"/></div>
+            </div>
+            <p class="muted" style="margin-bottom:8px">ফাঁকা রাখলে ধূসর অক্ষরের default price প্রযোজ্য হবে।</p>
+            <button class="btn sm" style="width:100%">💾 Price সেভ করুন</button>
+          </form>
+
+          <form method="POST" action="/admin/setversion" class="row" style="flex-wrap:nowrap">
+            <input type="hidden" name="number" value="${esc(num)}"/>
+            <select name="version">
+              ${[[0, "Auto (প্রতিবার choice)"], [1, "V1"], [2, "V2"], [3, "V3"], [4, "V4"]].map(([v, l]) => `<option value="${v}" ${(u.defaultVersion || 0) === v ? "selected" : ""}>${l}</option>`).join("")}
+            </select>
+            <button class="btn ghost sm">Set Version</button>
+          </form>
+
+          <div class="row">
+            <a class="btn ghost sm" style="flex:1" href="/admin/user/${esc(normalizeNumber(num))}">📋 History</a>
+            <form method="POST" action="/admin/toggle" style="flex:1"><input type="hidden" name="number" value="${esc(num)}"/><button class="btn warn sm" style="width:100%">${on ? "⏸ Disable" : "▶️ Enable"}</button></form>
+            <form method="POST" action="/admin/delete" style="flex:1" onsubmit="return confirm('${esc(num)} কে স্থায়ীভাবে Delete করবেন?')"><input type="hidden" name="number" value="${esc(num)}"/><button class="btn bad sm" style="width:100%">🗑 Delete</button></form>
+          </div>
+        </div>
+      </details>
+    </div>`;
+  };
+
+  const todayRows = today.map(r => `
+    <div class="li">
+      <div><div class="a">${esc(r.name || "—")} <span class="muted">${esc(r.number)}</span></div><div class="b">কাজ: ${r.jobs} টা · কাটা: ${r.spent} ৳${r.cost ? ` · খরচ: ${r.cost} ৳` : ""}</div></div>
+      <a class="btn ghost sm" href="/admin/user/${esc(r.number)}">বিস্তারিত →</a>
+    </div>`).join("") || `<p class="muted" style="padding:10px 0">আজকে এখনো কেউ কাজ করেনি।</p>`;
+
+  const body = `
+  <div class="stats">
+    ${statBox("আজকের কাজ", todayJobs, "var(--acc2)")}
+    ${statBox("আজকের আয়", todayRev + " ৳", "var(--ok)")}
+    ${statBox("আজকের লাভ", todayProfit + " ৳", todayProfit >= 0 ? "var(--ok)" : "var(--bad)")}
+    ${statBox("মোট User", `${users.length} <span class="muted">(${activeCnt} active)</span>`)}
+    ${statBox("User দের Balance", totalBal + " ৳", "var(--warn)")}
+  </div>
+
+  <h2 class="sec">📅 আজকের কাজের হিসাব <span>${todayJobs} কাজ · ${todayRev} ৳ কাটা</span></h2>
+  <div class="card">${todayRows}</div>
+
+  <h2 class="sec">⚙️ Default Price ও আমাদের API খরচ</h2>
+  <form class="card" method="POST" action="/admin/settings">
+    <div class="fields">
+      <div><label class="f">PDF Card Price ৳</label><input name="cardPrice" type="number" step="any" value="${settings.cardPrice || 0}"/></div>
+      <div><label class="f">SV1 Price ৳</label><input name="svPrice" type="number" step="any" value="${settings.svPrice || 0}"/></div>
+      <div><label class="f">SV2 (VIP) Price ৳</label><input name="sv2Price" type="number" step="any" value="${settings.sv2Price || 0}"/></div>
+      <div><label class="f">SV1 এ আমাদের খরচ ৳</label><input name="svCost" type="number" step="any" value="${settings.svCost || 0}"/></div>
+      <div><label class="f">SV2 এ আমাদের খরচ ৳</label><input name="sv2Cost" type="number" step="any" value="${settings.sv2Cost || 0}"/></div>
+    </div>
+    <button class="btn">💾 Save Settings</button>
+    <p class="muted" style="margin-top:10px">Custom price না থাকা user রা default price দেবে। "আমাদের খরচ" শুধু লাভ হিসাবের জন্য, user কে দেখানো হয় না।</p>
+  </form>
+
+  <div class="grid2" style="margin-top:12px">
+    <details class="card">
+      <summary class="sum">📢 Broadcast (সব active user কে)</summary>
       <form method="POST" action="/admin/broadcast">
-        <textarea name="message" rows="3" required placeholder="যেমন: ✅ Bot On করা হয়েছে, এখন থেকে NID Card বানাতে পারবেন।" style="margin-bottom:8px"></textarea>
-        <button style="background:#0078d4;color:#fff;border:0;padding:8px 16px;border-radius:4px;cursor:pointer">📤 সবাইকে পাঠান</button>
+        <textarea name="message" rows="4" required placeholder="যেমন: ✅ Bot On করা হয়েছে, এখন থেকে NID Card বানাতে পারবেন।" style="margin-bottom:10px"></textarea>
+        <button class="btn" style="width:100%">📤 সবাইকে পাঠান</button>
       </form>
-    </div>
-
+    </details>
     <div class="card">
-      <h3>🕐 Pending Version Choice (${pendingChoices.size})</h3>
-      <ul>${pendingList}</ul>
+      <div class="sum" style="margin-bottom:12px">🔌 সিস্টেম স্ট্যাটাস</div>
+      <div class="row" style="margin-bottom:12px">
+        <span class="pill ${sv1OK ? "on" : "off"}">SV1 key ${sv1OK ? "✓" : "✗"}</span>
+        <span class="pill ${sv2OK ? "on" : "off"}">SV2 API ${sv2OK ? "✓" : "✗"}</span>
+        <span class="pill ${mongoOK ? "on" : "off"}">MongoDB ${mongoOK ? "✓" : "✗"}</span>
+        <span class="pill ${ghOK ? "on" : "off"}">GitHub ${ghOK ? "✓" : "✗"}</span>
+      </div>
+      <form method="POST" action="/admin/backup"><button class="btn ghost" style="width:100%">☁️ MongoDB Backup এখনই</button></form>
     </div>
+  </div>
 
-    <div class="card">
-      <h3>➕ Add User</h3>
-      <form method="POST" action="/admin/add">
-        <input name="number" placeholder="880XXXXXXXXXX" required/>
-        <input name="name"   placeholder="Name"/>
-        <input name="balance" placeholder="Balance" value="0" type="number" style="width:80px"/>
-        <input name="price" placeholder="PDF Price (blank=default)" type="number" style="width:170px"/>
-        <input name="svPrice" placeholder="SV Price (blank=default)" type="number" style="width:170px"/>
-        <select name="defaultVersion">
-          <option value="0">Auto (choice দেখাবে)</option>
-          <option value="1">V1 Default</option>
-          <option value="2">V2 Default</option>
-          <option value="3">V3 Default</option>
-          <option value="4">V4 Default</option>
-        </select>
-        <button>Add</button>
-      </form>
-    </div>
+  <h2 class="sec">👥 Users <span>${users.length} জন</span></h2>
+  <div class="row" style="margin-bottom:12px"><input id="q" placeholder="🔍 নাম বা নম্বর দিয়ে খুঁজুন..." style="flex:1 1 220px"/></div>
 
-    <div class="card">
-      <form method="POST" action="/admin/backup" style="display:inline">
-        <button style="background:#17a2b8;color:#fff;border:0;padding:8px 16px;border-radius:4px;cursor:pointer">☁️ MongoDB Backup</button>
-      </form>
-    </div>
+  <details class="card" style="margin-bottom:12px">
+    <summary class="sum">➕ নতুন User যোগ করুন</summary>
+    <form method="POST" action="/admin/add">
+      <div class="fields">
+        <div><label class="f">WhatsApp নম্বর *</label><input name="number" placeholder="880XXXXXXXXXX" required/></div>
+        <div><label class="f">নাম</label><input name="name" placeholder="Name"/></div>
+        <div><label class="f">শুরুর Balance ৳</label><input name="balance" type="number" step="any" value="0"/></div>
+        <div><label class="f">Default Version</label>
+          <select name="defaultVersion"><option value="0">Auto (choice দেখাবে)</option><option value="1">V1</option><option value="2">V2</option><option value="3">V3</option><option value="4">V4</option></select></div>
+        <div><label class="f">PDF Price (ফাঁকা = default)</label><input name="price" type="number" step="any"/></div>
+        <div><label class="f">SV1 Price (ফাঁকা = default)</label><input name="svPrice" type="number" step="any"/></div>
+        <div><label class="f">SV2 Price (ফাঁকা = default)</label><input name="sv2Price" type="number" step="any"/></div>
+      </div>
+      <button class="btn" style="width:100%">➕ User যোগ করুন</button>
+    </form>
+  </details>
 
-    <h3>👥 Users (${users.length})</h3>
-    <table>
-      <tr><th>Number</th><th>Name</th><th>Balance</th><th>PDF Price</th><th>SV Price</th><th>Active</th><th>Default Ver</th><th>Mode</th><th>Cards</th><th>Last Used</th><th>Actions</th></tr>
-      ${rows}
-    </table>
-  </body></html>`);
+  <div class="users" id="users">${users.map(userCard).join("") || `<div class="card muted">কোনো user নেই।</div>`}</div>
+
+  <script>
+  document.getElementById('q').addEventListener('input',function(){
+    var v=this.value.trim().toLowerCase();
+    document.querySelectorAll('#users .u').forEach(function(c){c.style.display=c.dataset.q.indexOf(v)>-1?'':'none'});
+  });
+  </script>`;
+
+  res.send(adminPage("NID Hub Admin", body, "home"));
 });
 
-// ✅ NEW: প্রতিটা user এর আলাদা info page — মোট কাজ, মোট টাকা, আজকের কাজ/টাকা, আর সম্পূর্ণ job history
+// ── User detail / history ──
 app.get("/admin/user/:number", adminAuth, (req, res) => {
-  const number = normalizeNumber(req.params.number);
+  const number  = normalizeNumber(req.params.number);
   const u       = getUser(number);
   const summary = getUserTxSummary(number);
+  const resps   = pruneResponses().filter(r => r.number === number).reverse();
 
-  const historyRows = summary.list.slice(0, 200).map(t => `<tr>
-      <td style="font-size:11px">${new Date(t.time).toLocaleString("en-BD", { timeZone: "Asia/Dhaka", hour12: true, dateStyle: "short", timeStyle: "short" })}</td>
-      <td><span class="badge ${t.mode === "sv" ? "badge-yellow" : "badge-blue"}">${t.mode === "sv" ? "SV" : "PDF"}</span></td>
-      <td>V${t.version}</td>
-      <td>${t.name || "—"}</td>
-      <td>${t.nid || "—"}</td>
-      <td style="color:#dc2626;font-weight:bold">${t.price} ৳</td>
-    </tr>`).join("") || `<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">কোনো কাজ করা হয়নি এখনো</td></tr>`;
+  const rows = summary.list.slice(0, 200).map(t => `<tr>
+    <td>${fmtTime(t.time)}</td>
+    <td>${modePill(t.mode)}</td>
+    <td>V${esc(t.version)}</td>
+    <td>${esc(t.name || "—")}</td>
+    <td>${esc(t.nid || "—")}</td>
+    <td style="color:var(--bad);font-weight:700">${t.price} ৳</td>
+    <td class="muted">${t.cost || 0} ৳</td>
+  </tr>`).join("") || `<tr><td colspan="7" class="muted" style="text-align:center;padding:20px">এখনো কোনো কাজ করা হয়নি</td></tr>`;
 
-  res.send(`<html><head><style>
-    body{font-family:sans-serif;max-width:900px;margin:30px auto;padding:20px}
-    table{width:100%;border-collapse:collapse;margin:15px 0}
-    th,td{border:1px solid #ddd;padding:7px;text-align:left;font-size:12px}
-    th{background:#0078d4;color:#fff}
-    .card{background:#f9f9f9;padding:15px;margin:10px 0;border-radius:6px;border:1px solid #ddd}
-    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
-    .stat{background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center}
-    .stat .v{font-size:22px;font-weight:bold;color:#0078d4}
-    .stat .l{font-size:11px;color:#666}
-    .badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:bold}
-    .badge-blue{background:#dbeafe;color:#1e40af}
-    .badge-yellow{background:#fef3c7;color:#92400e}
-  </style></head><body>
-    <a href="/admin" style="color:#0078d4;text-decoration:none">← Admin Panel এ ফিরুন</a>
-    <h1>📋 ${u?.name || "User"} — ${number}</h1>
+  const respRows = resps.map(r => `<div class="li">
+    <div><div class="a">${esc(r.nid)} ${modePill(r.provider)}</div><div class="b">${fmtTime(r.time)}</div></div>
+    <a class="btn ghost sm" href="/admin/response/${esc(r.id)}">দেখুন</a>
+  </div>`).join("") || `<p class="muted">গত ২৪ ঘণ্টায় কোনো VIP response নেই।</p>`;
 
-    <div class="stats-grid">
-      <div class="stat"><div class="v">${getUserBalance(number)} ৳</div><div class="l">বর্তমান Balance</div></div>
-      <div class="stat"><div class="v">${summary.count}</div><div class="l">মোট কাজ (সর্বমোট)</div></div>
-      <div class="stat"><div class="v">${summary.totalSpent} ৳</div><div class="l">মোট টাকা কাটা হয়েছে</div></div>
-      <div class="stat"><div class="v">${summary.todayCount}</div><div class="l">আজকের কাজ</div></div>
-      <div class="stat"><div class="v">${summary.todaySpent} ৳</div><div class="l">আজকে কাটা হয়েছে</div></div>
-    </div>
+  const profit = summary.totalSpent - summary.totalCost;
+  const body = `
+  <a href="/admin#u-${esc(number)}">← Dashboard</a>
+  <h2 class="sec" style="margin-top:14px">📋 ${esc(u?.name || "User")} <span>${esc(number)}</span></h2>
+  <div class="stats">
+    ${statBox("Balance", getUserBalance(number) + " ৳", "var(--ok)")}
+    ${statBox("মোট কাজ", summary.count)}
+    ${statBox("মোট কাটা", summary.totalSpent + " ৳", "var(--bad)")}
+    ${statBox("আজকের কাজ", summary.todayCount, "var(--acc2)")}
+    ${statBox("আজ কাটা", summary.todaySpent + " ৳", "var(--warn)")}
+    ${statBox("এর থেকে লাভ", profit + " ৳", profit >= 0 ? "var(--ok)" : "var(--bad)")}
+  </div>
 
-    <div class="card">
-      <h3>📜 Job History (সর্বশেষ ২০০ টা)</h3>
-      <table>
-        <tr><th>সময়</th><th>Mode</th><th>Version</th><th>নাম</th><th>NID</th><th>কাটা হয়েছে</th></tr>
-        ${historyRows}
-      </table>
-    </div>
-  </body></html>`);
+  <h2 class="sec">🗂 গত ২৪ ঘণ্টার VIP Response <span>${resps.length} টা</span></h2>
+  <div class="card">${respRows}</div>
+
+  <h2 class="sec">📜 Job History <span>সর্বশেষ ২০০টা</span></h2>
+  <div class="card tw" style="padding:6px 10px">
+    <table><thead><tr><th>সময়</th><th>API</th><th>Ver</th><th>নাম</th><th>NID</th><th>কাটা</th><th>খরচ</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+
+  res.send(adminPage("User History", body, "home"));
 });
 
+// ── VIP responses (২৪ ঘণ্টা) ──
+app.get("/admin/responses", adminAuth, (req, res) => {
+  const list  = pruneResponses().slice().reverse();
+  const users = getUsers();
+  const nameOf = (n) => users.find(u => normalizeNumber(u.number) === n)?.name || "";
+  const ghOK  = !!(CONFIG.GITHUB_TOKEN && CONFIG.GITHUB_REPO);
+
+  const rows = list.map(r => `<tr>
+    <td>${fmtTime(r.time)}</td>
+    <td>${esc(nameOf(r.number) || "—")}<br><span class="muted">${esc(r.number)}</span></td>
+    <td>${esc(r.nid)}</td>
+    <td>${modePill(r.provider)}</td>
+    <td><a class="btn ghost sm" href="/admin/response/${esc(r.id)}">দেখুন</a> <a class="btn ghost sm" href="/admin/response/${esc(r.id)}/raw">⬇️</a></td>
+  </tr>`).join("") || `<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">গত ২৪ ঘণ্টায় কোনো VIP response নেই</td></tr>`;
+
+  const body = `
+  <h2 class="sec" style="margin-top:4px">🗂 VIP API Response <span>হুবহু save · ২৪ ঘণ্টা পর auto মুছে যায়</span></h2>
+  <p class="muted" style="margin-bottom:12px">GitHub backup: ${ghOK ? `<b style="color:var(--ok)">চালু</b> — repo <code>${esc(CONFIG.GITHUB_REPO)}</code> এর <code>responses/&lt;user-number&gt;/</code> folder এ স্থায়ীভাবে জমা হচ্ছে` : `<b style="color:var(--warn)">বন্ধ</b> (GITHUB_TOKEN ও GITHUB_REPO env সেট করলে চালু হবে)`}</p>
+  <div class="card tw" style="padding:6px 10px">
+    <table><thead><tr><th>সময়</th><th>User</th><th>NID</th><th>API</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+
+  res.send(adminPage("VIP Responses", body, "resp"));
+});
+
+app.get("/admin/response/:id/raw", adminAuth, (req, res) => {
+  const r = pruneResponses().find(x => x.id === req.params.id);
+  if (!r) return res.status(404).send("Not found");
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${String(r.nid).replace(/[^\w-]/g, "")}_${r.provider}.json"`);
+  res.send(JSON.stringify(r.raw, null, 2));
+});
+
+app.get("/admin/response/:id", adminAuth, (req, res) => {
+  const r = pruneResponses().find(x => x.id === req.params.id);
+  if (!r) {
+    return res.status(404).send(adminPage("Not found",
+      `<div class="card">রেসপন্স পাওয়া যায়নি (২৪ ঘণ্টা পার হয়ে গিয়ে থাকতে পারে)। <a href="/admin/responses">← ফিরে যান</a></div>`, "resp"));
+  }
+  const body = `
+  <a href="/admin/responses">← সব Response</a>
+  <h2 class="sec" style="margin-top:14px">${modePill(r.provider)} NID ${esc(r.nid)} <span>${fmtTime(r.time)} · ${esc(r.number)}</span></h2>
+  <div class="row" style="margin-bottom:12px">
+    <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('j').innerText);this.textContent='✅ Copied'">📋 Copy</button>
+    <a class="btn ghost" href="/admin/response/${esc(r.id)}/raw">⬇️ Download JSON</a>
+  </div>
+  <pre id="j" class="code">${esc(JSON.stringify(r.raw, null, 2))}</pre>`;
+  res.send(adminPage("Response", body, "resp"));
+});
+
+// ── Actions ──
 app.post("/admin/add", adminAuth, (req, res) => {
   const users = getUsers();
-  const { number, name, balance, defaultVersion, price, svPrice } = req.body;
+  const { number, name, balance, defaultVersion, price, svPrice, sv2Price } = req.body;
   const n = normalizeNumber(number);
-  if (!users.find(u => normalizeNumber(u.number) === n)) {
+  if (n && !users.find(u => normalizeNumber(u.number) === n)) {
     const newUser = {
-      number: n, name: name||"",
-      balance: parseFloat(balance)||0,
+      number: n, name: name || "",
+      balance: parseFloat(balance) || 0,
       active: true,
-      defaultVersion: parseInt(defaultVersion)||0,
+      defaultVersion: parseInt(defaultVersion) || 0,
     };
-    if (price   !== undefined && price   !== "") newUser.price   = parseFloat(price);   // ✅ custom PDF price (দিলে)
-    if (svPrice !== undefined && svPrice !== "") newUser.svPrice = parseFloat(svPrice); // ✅ custom SV price (দিলে)
+    if (price    !== undefined && price    !== "") newUser.price    = parseFloat(price);
+    if (svPrice  !== undefined && svPrice  !== "") newUser.svPrice  = parseFloat(svPrice);
+    if (sv2Price !== undefined && sv2Price !== "") newUser.sv2Price = parseFloat(sv2Price);
     users.push(newUser);
     saveUsers(users); backupData();
   }
-  res.redirect("/admin");
+  backTo(res, n);
 });
 
 app.post("/admin/recharge", adminAuth, (req, res) => {
@@ -2090,33 +2577,36 @@ app.post("/admin/recharge", adminAuth, (req, res) => {
     users[i].balance = (users[i].balance || 0) + (type === "remove" ? -amt : amt);
     saveUsers(users); backupData();
   }
-  res.redirect("/admin");
+  backTo(res, number);
 });
 
-// ✅ প্রতিটা user এর জন্য আলাদা PDF price সেট/আপডেট/রিমুভ করার route
-app.post("/admin/setprice", adminAuth, (req, res) => {
+// ✅ per-user SV1 / SV2 API on-off
+app.post("/admin/toggleapi", adminAuth, (req, res) => {
+  const api = req.body.api;
+  if (api === "sv1" || api === "sv2") {
+    const users = getUsers();
+    const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
+    if (i !== -1) {
+      users[i][api + "Enabled"] = users[i][api + "Enabled"] === false; // false → true, বাকি সব → false
+      saveUsers(users); backupData();
+    }
+  }
+  backTo(res, req.body.number);
+});
+
+// ✅ PDF / SV1 / SV2 তিনটা price একসাথে (ফাঁকা = default এ ফেরত)
+app.post("/admin/setprices", adminAuth, (req, res) => {
   const users = getUsers();
   const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
   if (i !== -1) {
-    const p = req.body.price;
-    if (p === "" || p === undefined) delete users[i].price; // খালি রেখে Set দিলে আবার default price এ ফিরে যাবে
-    else users[i].price = parseFloat(p);
+    for (const k of ["price", "svPrice", "sv2Price"]) {
+      const v = req.body[k];
+      if (v === "" || v === undefined) delete users[i][k];
+      else users[i][k] = parseFloat(v);
+    }
     saveUsers(users); backupData();
   }
-  res.redirect("/admin");
-});
-
-// ✅ NEW: প্রতিটা user এর জন্য আলাদা SV price সেট/আপডেট/রিমুভ করার route
-app.post("/admin/setsvprice", adminAuth, (req, res) => {
-  const users = getUsers();
-  const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
-  if (i !== -1) {
-    const p = req.body.svPrice;
-    if (p === "" || p === undefined) delete users[i].svPrice; // খালি রেখে Set SV দিলে আবার default svPrice এ ফিরে যাবে
-    else users[i].svPrice = parseFloat(p);
-    saveUsers(users); backupData();
-  }
-  res.redirect("/admin");
+  backTo(res, req.body.number);
 });
 
 app.post("/admin/setversion", adminAuth, (req, res) => {
@@ -2126,14 +2616,14 @@ app.post("/admin/setversion", adminAuth, (req, res) => {
     users[i].defaultVersion = parseInt(req.body.version) || 0;
     saveUsers(users); backupData();
   }
-  res.redirect("/admin");
+  backTo(res, req.body.number);
 });
 
 app.post("/admin/toggle", adminAuth, (req, res) => {
   const users = getUsers();
-  const i     = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
-  if (i !== -1) { users[i].active = !users[i].active; saveUsers(users); backupData(); }
-  res.redirect("/admin");
+  const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
+  if (i !== -1) { users[i].active = users[i].active === false; saveUsers(users); backupData(); }
+  backTo(res, req.body.number);
 });
 
 app.post("/admin/delete", adminAuth, (req, res) => {
@@ -2142,11 +2632,12 @@ app.post("/admin/delete", adminAuth, (req, res) => {
   res.redirect("/admin");
 });
 
-// ✅ UPDATED: cardPrice এবং svPrice দুটোই save হবে
 app.post("/admin/settings", adminAuth, (req, res) => {
+  const f = (k) => parseFloat(req.body[k]) || 0;
   saveSettings({
-    cardPrice: parseFloat(req.body.cardPrice) || 0,
-    svPrice:   parseFloat(req.body.svPrice)   || 0,
+    ...getSettings(),
+    cardPrice: f("cardPrice"), svPrice: f("svPrice"), sv2Price: f("sv2Price"),
+    svCost: f("svCost"), sv2Cost: f("sv2Cost"),
   });
   backupData();
   res.redirect("/admin");
@@ -2157,21 +2648,18 @@ app.post("/admin/backup", adminAuth, async (req, res) => {
   res.redirect("/admin");
 });
 
-// ✅ সব active user কে broadcast message পাঠানো
 app.post("/admin/broadcast", adminAuth, async (req, res) => {
   const message = (req.body.message || "").trim();
-  if (!message) return res.redirect("/admin");
-
-  // সাথে সাথে admin panel কে response দিয়ে দিচ্ছি, ব্যাকগ্রাউন্ডে ধীরে ধীরে সবাইকে পাঠানো হবে
   res.redirect("/admin");
+  if (!message) return;
 
-  const users = getUsers().filter(u => u.active !== false); // শুধু active user দের কাছে যাবে
+  const users = getUsers().filter(u => u.active !== false);
   (async () => {
     let sent = 0;
     for (const u of users) {
       await sendText(normalizeNumber(u.number), message);
       sent++;
-      await new Promise(r => setTimeout(r, 300)); // WhatsApp rate-limit এড়াতে ছোট গ্যাপ
+      await new Promise(r => setTimeout(r, 300)); // rate-limit এড়াতে
     }
     console.log(`✅ Broadcast sent to ${sent}/${users.length} users`);
   })();
@@ -2195,13 +2683,24 @@ setInterval(() => {
       console.log(`⏰ Pending expired: ${num}`);
     }
   }
+  for (const [num, p] of pendingSV2.entries()) {
+    if (Date.now() - p.timestamp > PENDING_SV2_TTL) pendingSV2.delete(num);
+  }
 }, 5 * 60 * 1000);
+
+// ✅ VIP response ২৪ ঘণ্টা পর মুছে ফেলা (প্রতি ঘণ্টায়)
+setInterval(() => { try { pruneResponses(); } catch (e) { console.error("prune error:", e.message); } }, 60 * 60 * 1000);
 
 (async () => {
   try {
     await restoreData();
   } catch(e) { console.error("Restore failed:", e.message); }
   cleanupOldFiles();
+  try { pruneResponses(); } catch {}
+
+  if (!CONFIG.SV_API1_KEY) console.warn("⚠️ SV_API1_KEY env সেট করা নেই — SV1 কাজ করবে না");
+  if (!CONFIG.SV_API2_URL || !CONFIG.SV_API2_KEY) console.warn("ℹ️ SV_API2_URL / SV_API2_KEY সেট নেই — SV2 (VIP) বন্ধ থাকবে");
+  if (CONFIG.ADMIN_PASS === "admin123") console.warn("⚠️ ADMIN_PASS এখনো ডিফল্ট (admin123) — env এ বদলে দিন");
 
   app.listen(CONFIG.PORT, "0.0.0.0", () => {
     console.log(`🚀 NID Bot running on port ${CONFIG.PORT}`);
