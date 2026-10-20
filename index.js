@@ -646,6 +646,31 @@ function normalizeDOB(raw) {
   return null;
 }
 
+// ✅ বাংলা সংখ্যা (০-৯) → ইংরেজি
+const bnToEn = (s) => String(s ?? "").replace(/[০-৯]/g, d => "০১২৩৪৫৬৭৮৯".indexOf(d));
+
+// ✅ user যা-ই লিখুক (verify, nid, dob, নাম, অন্য কথা...) — শুধু ১০/১৩/১৭ ডিজিটের NID আর জন্ম তারিখ বের করে নেয়
+function parseSVInput(raw) {
+  let rest = bnToEn(raw);
+  const dobs = [];
+
+  // ১) 31/02/2004, 2004-02-31, 31.02.2004 ইত্যাদি
+  rest = rest.replace(/(?<!\d)\d{1,4}[\/.\-]\d{1,2}[\/.\-]\d{1,4}(?!\d)/g, (m) => { dobs.push(m); return " "; });
+
+  // ২) 31 January 2004 / 31-Jan-2004 / 31st Jan, 2004
+  rest = rest.replace(/(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s,\-]+([A-Za-z]{3,9})\.?,?[\s\-]+(\d{4})(?!\d)/g, (m, d, mon, y) => {
+    if (!MONTH_NAME_MAP[mon.toLowerCase()]) return m;
+    dobs.push(`${d} ${mon} ${y}`);
+    return " ";
+  });
+
+  // ৩) NID: ঠিক ১০, ১৩ বা ১৭ ডিজিট (১১/১২/১৪ ডিজিটের ফোন নম্বর ইত্যাদি বাদ)
+  const nids = [...new Set(rest.match(/(?<!\d)(?:\d{17}|\d{13}|\d{10})(?!\d)/g) || [])];
+  return { nids, dobs: [...new Set(dobs)] };
+}
+
+const serviceModeLabel = (m) => m === "sv" ? "SV Mode ✅" : m === "vip" ? "VIP Mode 💎" : "Default (PDF)";
+
 // ✅ NEW: একবার সফল হওয়া NID+DOB lookup আবার API call না করে cache থেকে serve করার জন্য (token বাঁচাতে)
 const SV_CACHE_FILE = path.join(CONFIG.DATA_DIR, "sv_cache.json");
 const getSVCache  = () => loadJSON(SV_CACHE_FILE, {});
@@ -1792,7 +1817,15 @@ async function confirmSV2(from) {
   return runSV2(from, p.nid, p.dob, p.version);
 }
 
-async function handleSVRequest(from, nid, dob) {
+async function handleSVRequest(from, nid, dob, mode = "sv") {
+  // 💎 VIP mode: সরাসরি SV2 — SV1 এ যাওয়া হয় না (cache থাকলে runSV2 নিজেই cache ব্যবহার করে)
+  if (mode === "vip") {
+    if (!isApiEnabled(from, "sv2")) {
+      return sendText(from, "❌ VIP (SV2) আপনার জন্য বন্ধ আছে। Admin এর সাথে যোগাযোগ করুন।");
+    }
+    return runSV2(from, nid, dob, getUserDefaultVersion(from) || 4);
+  }
+
   const s1 = isApiEnabled(from, "sv1");
   const s2 = isApiEnabled(from, "sv2");
   if (!s1 && !s2) {
@@ -1870,6 +1903,27 @@ async function handleIncoming(msg, contact) {
       );
     }
 
+    // ── 💎 .vip / .vip off : VIP (SV2) সরাসরি চালানোর নিজস্ব command ──
+    if (text === ".vip" || text === "/vip" || text === ".sv2") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      if (!isApiEnabled(from, "sv2")) {
+        return sendText(from, "❌ VIP (SV2) আপনার জন্য বন্ধ আছে। Admin এর সাথে যোগাযোগ করুন।");
+      }
+      setUserServiceMode(from, "vip");
+      setUserDefaultVersion(from, 4); // ✅ V4 layout
+      return sendText(from,
+        `💎 *VIP Service Activated! (Default Layout: V4)*\n\nএখন থেকে NID ও জন্ম তারিখ পাঠালে সরাসরি VIP API দিয়ে কার্ড তৈরি হবে।\n💰 প্রতি কার্ড: ${getSV2PriceForUser(from)} টাকা (তথ্য পেলে তবেই কাটা হবে)\n\nউদাহরণ:\n\`1234567890 1990-01-01\`\n\nবন্ধ করতে পাঠান: *.vip off*`
+      );
+    }
+
+    if (text === ".vip off" || text === "/vip off") {
+      markRead(msgId);
+      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+      setUserServiceMode(from, "default");
+      return sendText(from, "🔄 *VIP Service বন্ধ করা হয়েছে!* এখন থেকে সাধারণ PDF অপশন চালু হলো।");
+    }
+
     // বাটন কাজ না করলে text দিয়ে SV2 confirm
     if (text === ".sv2 yes") { markRead(msgId); return confirmSV2(from); }
     if (text === ".sv2 no")  {
@@ -1923,26 +1977,39 @@ async function handleIncoming(msg, contact) {
       return sendText(from, "✅ Default version *বন্ধ* হয়েছে! এখন প্রতিবার choice দেখাবে।");
     }
 
-    // ── SV Mode: NID DOB auto-detection ──
-    // যেকোনো ফরম্যাট: 2004-02-31, 2004/02/31, 31/02/2004, 31.02.2004, 31-02-2004, "31 January 2004"
-    const svMatch = rawText.trim().match(/^(\d{10,17})\s+(\d{1,4}[\/.\-]\d{1,2}[\/.\-]\d{1,4}|\d{1,2}\s+[a-zA-Z]+\s+\d{4})$/);
-    if (svMatch && getUserServiceMode(from) === "sv") {
-      markRead(msgId);
-      if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
+    // ── SV / VIP Mode: user যা-ই লিখুক, শুধু ১০/১৩/১৭ ডিজিট NID আর জন্ম তারিখ নেওয়া হয় ──
+    const userMode = getUserServiceMode(from);
+    if ((userMode === "sv" || userMode === "vip") && !text.startsWith(".") && !text.startsWith("/")) {
+      const { nids, dobs } = parseSVInput(rawText);
 
-      const nidInputRaw   = svMatch[1];
-      const dobNormalized = normalizeDOB(svMatch[2]); // যেকোনো ফরম্যাট → YYYY-MM-DD
+      if (nids.length || dobs.length) {
+        markRead(msgId);
+        if (!isAllowed(from)) return sendText(from, "❌ আপনি authorized নন।");
 
-      if (!dobNormalized) {
-        return sendText(from,
-          "❌ জন্ম তারিখের ফরম্যাট বুঝতে পারিনি।\nব্যবহার করুন: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, YYYY/MM/DD ইত্যাদি।"
-        );
+        // একাধিক পেলে অনুমান করা হয় না — ভুল NID তে টোকেন/টাকা যাওয়া ঠেকাতে
+        if (nids.length > 1 || dobs.length > 1) {
+          return sendText(from, "⚠️ একাধিক NID বা জন্ম তারিখ পাওয়া গেছে। ভুল চার্জ এড়াতে একবারে একটাই পাঠান।");
+        }
+        if (!nids.length) {
+          return sendText(from, "❌ ১০, ১৩ বা ১৭ ডিজিটের NID নম্বর পাওয়া যায়নি।\nNID ও জন্ম তারিখ একসাথে পাঠান।\nউদাহরণ: `1234567890 1990-01-01`");
+        }
+        if (!dobs.length) {
+          return sendText(from, "❌ জন্ম তারিখ পাওয়া যায়নি।\nNID ও জন্ম তারিখ একসাথে পাঠান।\nউদাহরণ: `1234567890 1990-01-01`");
+        }
+
+        const dobNormalized = normalizeDOB(dobs[0]); // যেকোনো ফরম্যাট → YYYY-MM-DD
+        if (!dobNormalized) {
+          return sendText(from,
+            "❌ জন্ম তারিখের ফরম্যাট বুঝতে পারিনি।\nব্যবহার করুন: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, YYYY/MM/DD ইত্যাদি।"
+          );
+        }
+
+        // পুরনো 13-digit NID হলে জন্ম সাল সামনে বসিয়ে ১৭ ডিজিট
+        const nid       = nids[0];
+        const nidForApi = nid.length === 13 ? dobNormalized.slice(0, 4) + nid : nid;
+
+        return handleSVRequest(from, nidForApi, dobNormalized, userMode);
       }
-
-      // পুরনো 13-digit NID হলে জন্ম সাল সামনে বসিয়ে ১৭ ডিজিট
-      const nidForApi = nidInputRaw.length === 13 ? dobNormalized.slice(0, 4) + nidInputRaw : nidInputRaw;
-
-      return handleSVRequest(from, nidForApi, dobNormalized);
     }
 
     if (text.startsWith(".setversion") || text.startsWith("setversion")) {
@@ -1990,7 +2057,7 @@ async function handleIncoming(msg, contact) {
       const defVer = getUserDefaultVersion(from);
       const svMode = getUserServiceMode(from);
       return sendText(from,
-        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price (PDF): ${cardP} টাকা\n🔧 SV1 Price: ${svP} টাকা (${s1on})\n💎 SV2 (VIP) Price: ${sv2P} টাকা (${s2on})\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${svMode === "sv" ? "SV Mode ✅" : "Default (PDF)"}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*`
+        `✅ Authorized\n💰 Balance: ${bal} টাকা\n💳 Card Price (PDF): ${cardP} টাকা\n🔧 SV1 Price: ${svP} টাকা (${s1on})\n💎 SV2 (VIP) Price: ${sv2P} টাকা (${s2on})\n⚙️ Default Version: ${defVer > 0 ? `V${defVer}` : "বন্ধ"}\n🔧 Service Mode: ${serviceModeLabel(svMode)}\n\nVersion: *.setversion v1/v2/v3/v4/off*\nSV Mode: *.sv* / *.sv off*\nVIP Mode: *.vip* / *.vip off*`
       );
     }
 
@@ -2003,6 +2070,8 @@ async function handleIncoming(msg, contact) {
         `⚙️ *.setversion off* → প্রতিবার choice\n` +
         `🔧 *.sv* → SV Service চালু (NID+DOB দিয়ে কার্ড)\n` +
         `🔧 *.sv off* → SV Service বন্ধ\n` +
+        `💎 *.vip* → VIP (SV2) সরাসরি চালু\n` +
+        `💎 *.vip off* → VIP বন্ধ\n` +
         `📊 *.status* → balance ও settings\n` +
         `🏓 *.ping* → bot check`
       );
@@ -2205,6 +2274,12 @@ details.m summary::-webkit-details-marker{display:none}
 details.m[open] summary{margin-bottom:12px}
 .stack{display:grid;gap:12px}
 .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.seg{display:flex;gap:3px;background:#0c1330;border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg form{flex:1}
+.seg button{width:100%;border:0;background:transparent;color:var(--mut);padding:8px 4px;border-radius:9px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit}
+.seg button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.cap{font-size:11px;color:var(--mut);margin:-4px 2px 0}
 /* lists & tables */
 .li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
 .li:last-child{border-bottom:0}
@@ -2309,7 +2384,14 @@ app.get("/admin", adminAuth, (req, res) => {
     const sv2   = u.sv2Enabled !== false;
     const pv    = (v) => (v !== undefined && v !== null && v !== "") ? v : "";
     const ini   = esc(((u.name || num) + "").trim().charAt(0).toUpperCase() || "#");
-    const svTag = u.serviceMode === "sv" ? `<span class="pill sv">SV Mode</span>` : "";
+    const curMode = u.serviceMode || "default";
+    const svTag   = curMode === "sv" ? `<span class="pill sv">SV Mode</span>` : curMode === "vip" ? `<span class="pill sv2">VIP Mode</span>` : "";
+    // ✅ admin নিজে user এর mode চালু করতে পারবে (user এর .sv / .vip পাঠানোর সমতুল্য)
+    const segBtn = (m, label, enabled) => `
+      <form method="POST" action="/admin/setmode">
+        <input type="hidden" name="number" value="${esc(num)}"/><input type="hidden" name="mode" value="${m}"/>
+        <button class="${curMode === m ? "on" : ""}" ${enabled ? "" : "disabled"}>${label}</button>
+      </form>`;
 
     return `
     <div class="u ${on ? "" : "off"}" id="u-${esc(normalizeNumber(num))}" data-q="${esc(((u.name || "") + " " + num).toLowerCase())}">
@@ -2334,6 +2416,8 @@ app.get("/admin", adminAuth, (req, res) => {
         </div>
       </form>
 
+      <div class="seg">${segBtn("default", "📄 PDF", true)}${segBtn("sv", "🔧 SV", sv1 || sv2)}${segBtn("vip", "💎 VIP", sv2)}</div>
+      <div class="cap">Service Mode — user এর .sv / .vip লেখার মতোই কাজ করে</div>
       <div class="sws">${swForm(num, "sv1", sv1, "SV1")}${swForm(num, "sv2", sv2, "SV2 VIP")}</div>
 
       <details class="m">
@@ -2588,7 +2672,26 @@ app.post("/admin/toggleapi", adminAuth, (req, res) => {
     const i = users.findIndex(u => normalizeNumber(u.number) === normalizeNumber(req.body.number));
     if (i !== -1) {
       users[i][api + "Enabled"] = users[i][api + "Enabled"] === false; // false → true, বাকি সব → false
+      const s1 = users[i].sv1Enabled !== false, s2 = users[i].sv2Enabled !== false;
+      // যে API এর ওপর mode নির্ভর করে সেটা বন্ধ হলে mode আবার PDF এ ফেরত
+      if ((users[i].serviceMode === "vip" && !s2) || (users[i].serviceMode === "sv" && !s1 && !s2)) users[i].serviceMode = "default";
       saveUsers(users); backupData();
+    }
+  }
+  backTo(res, req.body.number);
+});
+
+// ✅ admin থেকে user এর Service Mode চালু/বন্ধ: default (PDF) | sv | vip
+app.post("/admin/setmode", adminAuth, (req, res) => {
+  const mode = req.body.mode;
+  const u    = getUser(req.body.number);
+  if (u && ["default", "sv", "vip"].includes(mode)) {
+    const s1 = u.sv1Enabled !== false, s2 = u.sv2Enabled !== false;
+    const allowed = mode === "default" || (mode === "sv" && (s1 || s2)) || (mode === "vip" && s2);
+    if (allowed) {
+      setUserServiceMode(req.body.number, mode);
+      if (mode !== "default") setUserDefaultVersion(req.body.number, 4); // user নিজে .sv/.vip দিলে যা হয়
+      backupData();
     }
   }
   backTo(res, req.body.number);
