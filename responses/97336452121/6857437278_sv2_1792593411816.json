@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "নিবারন চন্দ্র বর্মন",
+      "nameEn": "Nibaron Chandro",
+      "gender": "male",
+      "father": "উমা কান্ত",
+      "mother": "সার ময়ী",
+      "nationalId": "6857437278",
+      "pin": "19414919450678667",
+      "oldNid": "4919450678667",
+      "voter_no": "490789678667",
+      "voter_area_code": "490789",
+      "sl_no": 243,
+      "voterArea": "যমুনা (পূর্ব) (490789)",
+      "occupation": "কৃষক",
+      "bloodGroup": "",
+      "birthPlace": "কুড়িগ্রাম",
+      "dateOfBirth": "1941-06-01",
+      "birthDay": "রবিবার",
+      "age": "৮৫ বছর ৪ মাস ২০ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ডালিমা, গ্রাম/রাস্তাঃ ডালিমা, মৌজা/মহল্লাঃ যমুনা পূর্ব, ইউনিয়ন : দূর্গাপুর, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ দূর্গাপুর, থানাঃ উলিপুর, উপজেলাঃ উলিপুর, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ডালিমা, গ্রাম/রাস্তাঃ ডালিমা, মৌজা/মহল্লাঃ যমুনা পূর্ব, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ দূর্গাপুর, থানাঃ উলিপুর, উপজেলাঃ উলিপুর, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "উলিপুর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "যমুনা পূর্ব",
+        "villageOrRoad": "ডালিমা",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "উলিপুর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "যমুনা পূর্ব, ইউনিয়ন : দূর্গাপুর",
+        "villageOrRoad": "ডালিমা",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/bf4e0177e2586dc40cd58ed81e161fb1.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 227,
+    "today_success": 142,
+    "today_cost": 2130,
+    "total_success": 2000,
+    "total_bill": 30000,
+    "speed": "2.956s"
+  }
+}
