@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ তুহিন খান",
+      "nameEn": "Md Tuhin Khan",
+      "gender": "male",
+      "father": "মোঃ আইয়ুব খান",
+      "mother": "শাহার বানু",
+      "nationalId": "3297690327",
+      "pin": "19861918113703385",
+      "oldNid": "1918113703385",
+      "voter_no": "193847703385",
+      "voter_area_code": "193847",
+      "sl_no": 46,
+      "voterArea": "যোগেরখিল (193847)",
+      "occupation": "কৃষক",
+      "bloodGroup": "",
+      "birthPlace": "কুমিল্লা",
+      "dateOfBirth": "1986-03-24",
+      "birthDay": "সোমবার",
+      "age": "৪০ বছর ৬ মাস ২৮ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ খা বাড়ি, গ্রাম/রাস্তাঃ যোগের খিল, মৌজা/মহল্লাঃ দৌলতপুর, ইউনিয়ন/পৌরসভাঃ বাংগরা (পূর্ব), থানাঃ বাঙ্গরা, উপজেলাঃ বাঙ্গরা, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ খা বাড়ি, গ্রাম/রাস্তাঃ যোগের খিল, মৌজা/মহল্লাঃ দৌলতপুর, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ বাংগরা (পূর্ব), থানাঃ মুরাদনগর, উপজেলাঃ মুরাদনগর, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "মুরাদনগর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "দৌলতপুর",
+        "villageOrRoad": "যোগের খিল",
+        "homeOrHolding": "খা বাড়ি",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "বাঙ্গরা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "দৌলতপুর",
+        "villageOrRoad": "যোগের খিল",
+        "homeOrHolding": "খা বাড়ি",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/288d57d48fd1ac063c216645de55a3f1.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 70,
+    "today_success": 35,
+    "today_cost": 525,
+    "total_success": 1893,
+    "total_bill": 28395,
+    "speed": "3.192s"
+  }
+}
