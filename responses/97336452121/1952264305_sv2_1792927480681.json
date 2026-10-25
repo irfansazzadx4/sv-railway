@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ আসাদুজ্জামান আবির",
+      "nameEn": "MD. ASADUZZAMAN ABIR",
+      "gender": "male",
+      "father": "মোঃ আঃ রাজ্জাক",
+      "mother": "মোছাঃ কমলা আক্তার",
+      "nationalId": "1952264305",
+      "pin": "19942695410000365",
+      "oldNid": "2695410000365",
+      "voter_no": "261195000344",
+      "voter_area_code": "261195",
+      "sl_no": "921",
+      "voterArea": "মতিঝিল টি এন্ড টি কলোনী (261195)",
+      "occupation": "ছাত্র/ছাত্রী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1994-02-12",
+      "birthDay": "শনিবার",
+      "age": "৩২ বছর ৮ মাস ১৩ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ টিনসেট ঘর, গ্রাম/রাস্তাঃ মতিঝিল টি এন্ড টি কলোনী, মৌজা/মহল্লাঃ টি এন্ড টি কলোনী, ওয়ার্ড নংঃ ১০, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ, ডাকঘরঃ জিপিও - ১০০০, উপজেলাঃ মতিঝিল, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ টিনসেট ঘর, গ্রাম/রাস্তাঃ মতিঝিল টি এন্ড টি কলোনী, মৌজা/মহল্লাঃ টি এন্ড টি কলোনী, ওয়ার্ড নংঃ ১০, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ, ডাকঘরঃ জিপিও - ১০০০, উপজেলাঃ মতিঝিল, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "মতিঝিল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "মতিঝিল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/ecea782cb6505287d9c25f6497729597.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 601,
+    "today_success": 252,
+    "today_cost": 3780,
+    "total_success": 2638,
+    "total_bill": 39570,
+    "speed": "7.689s"
+  }
+}
