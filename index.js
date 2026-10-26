@@ -41,6 +41,12 @@ const CONFIG = {
   GITHUB_REPO:   process.env.GITHUB_REPO,   // "owner/repo"
   GITHUB_BRANCH: process.env.GITHUB_BRANCH || "main",
 
+  // ✅ Meta / WhatsApp নিরাপত্তা ও broadcast
+  WA_APP_SECRET:           process.env.WHATSAPP_APP_SECRET,      // webhook signature যাচাই (Meta App → Settings → Basic)
+  ADMIN_WA_NUMBER:         process.env.ADMIN_WA_NUMBER,          // গুরুতর Meta alert এই নম্বরে আসবে
+  BROADCAST_TEMPLATE_NAME: process.env.BROADCAST_TEMPLATE_NAME,  // approved template (১টা {{1}} variable সহ)
+  BROADCAST_TEMPLATE_LANG: process.env.BROADCAST_TEMPLATE_LANG || "bn",
+
   PDF_API_URL:    process.env.PDF_API_URL,
   PDF_API_SECRET: process.env.PDF_API_SECRET,
 
@@ -1744,6 +1750,268 @@ async function chargeAndProcess(from, data, version, msgId, mode = "pdf") {
   }
 }
 
+// ═══════════════ META / WHATSAPP HEALTH + OPT-IN BROADCAST ═══════════════
+const EVENTS_FILE        = path.join(CONFIG.DATA_DIR, "wa_events.json");
+const COUNTERS_FILE      = path.join(CONFIG.DATA_DIR, "wa_counters.json");
+const BROADCAST_LOG_FILE = path.join(CONFIG.DATA_DIR, "broadcasts.json");
+
+const getEvents       = () => loadJSON(EVENTS_FILE, []);
+const getBroadcastLog = () => loadJSON(BROADCAST_LOG_FILE, []);
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// ── webhook signature (Meta App Secret দিয়ে) — জাল webhook ঠেকাতে ──
+function verifyMetaSignature(req) {
+  if (!CONFIG.WA_APP_SECRET) return true; // env সেট না থাকলে বন্ধ (startup এ warning দেওয়া হয়)
+  const sig = String(req.headers?.["x-hub-signature-256"] || "");
+  if (!req.rawBody) return false;
+  const expected = "sha256=" + crypto.createHmac("sha256", CONFIG.WA_APP_SECRET).update(req.rawBody).digest("hex");
+  const a = Buffer.from(sig), b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// ── Meta error code এর সাধারণ অর্থ (নিশ্চিত হতে Meta এর error-code docs দেখুন) ──
+const WA_ERROR_HINTS = {
+  131047: "২৪ ঘণ্টার window পার — free text নয়, approved template লাগবে",
+  131026: "মেসেজ পৌঁছায়নি (নম্বর WhatsApp এ নেই, block করেছে বা পুরনো ভার্সন)",
+  131048: "Spam rate limit — অনেকে মেসেজ report/block করছে, পাঠানো কমান",
+  131049: "Meta নিজে ডেলিভারি আটকেছে (user-engagement/quality কম)",
+  131056: "একই নম্বরে খুব দ্রুত অনেক মেসেজ (pair rate limit)",
+  130429: "Throughput limit — মেসেজ পাঠানোর গতি বেশি",
+  131031: "অ্যাকাউন্ট lock করা হয়েছে",
+  368:    "policy লঙ্ঘনের কারণে সাময়িকভাবে blocked",
+  132001: "Template পাওয়া যায়নি (নাম/ভাষা ভুল বা approved নয়)",
+  132000: "Template এর parameter সংখ্যা মেলেনি",
+  131009: "Parameter এর মান অবৈধ",
+};
+const STOP_BROADCAST_CODES = [130429, 131048, 131056, 131031, 368]; // এই error এলে broadcast সাথে সাথে থামে
+const severityForCode = (code) => [131048, 131031, 368].includes(Number(code)) ? "critical" : "warn";
+
+// ── event log ──
+let lastAlertAt = 0;
+function recordMetaEvent(evt) {
+  const list = getEvents();
+  const full = { id: crypto.randomBytes(5).toString("hex"), time: new Date().toISOString(), ...evt };
+  list.push(full);
+  if (list.length > 300) list.splice(0, list.length - 300);
+  saveJSON(EVENTS_FILE, list);
+
+  console.log(`📡 Meta event [${full.severity}] ${full.title} ${full.summary || ""}`);
+  // গুরুতর হলে admin কে WhatsApp এ জানানো (৫ মিনিটে সর্বোচ্চ ১টা)
+  if (full.severity === "critical" && CONFIG.ADMIN_WA_NUMBER && Date.now() - lastAlertAt > 5 * 60 * 1000) {
+    lastAlertAt = Date.now();
+    sendText(normalizeNumber(CONFIG.ADMIN_WA_NUMBER), `🚨 Meta alert\n${full.title}\n${full.summary || ""}`.slice(0, 900));
+  }
+  return full;
+}
+
+function bumpCounter(status) {
+  if (!["sent", "delivered", "read", "failed"].includes(status)) return;
+  const c   = loadJSON(COUNTERS_FILE, {});
+  const day = dhakaDay(Date.now());
+  c[day] = c[day] || { sent: 0, delivered: 0, read: 0, failed: 0 };
+  c[day][status]++;
+  const keys = Object.keys(c).sort();
+  while (keys.length > 14) delete c[keys.shift()];
+  saveJSON(COUNTERS_FILE, c);
+}
+
+// message status webhook (sent / delivered / read / failed)
+function handleStatus(st) {
+  bumpCounter(st.status);
+  if (st.status !== "failed") return;
+  const e = (st.errors || [])[0] || {};
+  recordMetaEvent({
+    kind: "status_failed",
+    code: e.code ?? null,
+    severity: severityForCode(e.code),
+    title: `মেসেজ ডেলিভারি ব্যর্থ (কোড ${e.code ?? "?"})`,
+    summary: `${e.title || e.message || ""} → ${normalizeNumber(st.recipient_id || "")}`.trim(),
+    raw: st,
+  });
+}
+
+// account_update / quality / template ইত্যাদি webhook field
+function handleAccountEvent(field, value) {
+  const ev = String(value.event || value.decision || "").toUpperCase();
+  let severity = "info", title = field, summary = "";
+
+  switch (field) {
+    case "phone_number_quality_update":
+      title = `Quality update: ${ev || "?"}`;
+      summary = `${value.display_phone_number || ""} · limit: ${value.current_limit || "?"}`.trim();
+      severity = (ev === "FLAGGED" || ev === "DOWNGRADE") ? "critical" : "info";
+      break;
+    case "account_update": {
+      title = `Account update: ${ev || "?"}`;
+      const bits = [];
+      if (value.violation_info?.violation_type) bits.push(`violation: ${value.violation_info.violation_type}`);
+      if (value.ban_info?.waba_ban_state)       bits.push(`ban: ${value.ban_info.waba_ban_state}`);
+      if (Array.isArray(value.restriction_info)) bits.push(`restriction: ${value.restriction_info.map(r => r.restriction_type).join(",")}`);
+      summary = bits.join(" · ");
+      severity = /VIOLATION|DISABLED|BAN|RESTRICT|DELETED/.test(ev) || bits.length ? "critical" : "info";
+      break;
+    }
+    case "account_review_update":
+      title = `Account review: ${ev || "?"}`;
+      severity = ev === "REJECTED" ? "critical" : "info";
+      break;
+    case "message_template_status_update":
+      title = `Template ${value.message_template_name || ""}: ${ev || "?"}`;
+      summary = value.reason || "";
+      severity = /REJECT|DISABLED|PAUSED/.test(ev) ? "warn" : "info";
+      break;
+    case "message_template_quality_update":
+      title = `Template quality ${value.message_template_name || ""}`;
+      summary = `${value.previous_quality_score || "?"} → ${value.new_quality_score || "?"}`;
+      severity = /LOW|RED/i.test(String(value.new_quality_score || "")) ? "warn" : "info";
+      break;
+    default:
+      title = `Webhook: ${field}`;
+  }
+  recordMetaEvent({ kind: "account", field, severity, title, summary, raw: { field, value } });
+}
+
+// ── phone number এর quality / limit (best-effort, Meta এর উত্তর যেমন আসে তেমন দেখানো হয়) ──
+let lastPhoneHealth = null;
+async function fetchPhoneHealth() {
+  const time = new Date().toISOString();
+  try {
+    const r = await axios.get(`https://graph.facebook.com/${CONFIG.WA_API_VERSION}/${CONFIG.WA_PHONE_ID}`, {
+      params:  { fields: "display_phone_number,verified_name,quality_rating,messaging_limit_tier,status,name_status" },
+      headers: { Authorization: `Bearer ${CONFIG.WA_TOKEN}` },
+      timeout: 15000,
+    });
+    lastPhoneHealth = { ok: true, data: r.data, time };
+  } catch (e) {
+    lastPhoneHealth = { ok: false, error: e.response?.data?.error?.message || e.message, time };
+  }
+  return lastPhoneHealth;
+}
+
+// ═══════════════ OPT-IN / OPT-OUT ═══════════════
+function updateUser(number, patch) {
+  const users = getUsers();
+  const i = users.findIndex(x => normalizeNumber(x.number) === normalizeNumber(number));
+  if (i === -1) return false;
+  Object.assign(users[i], patch);
+  saveUsers(users);
+  return true;
+}
+
+function setBroadcastOptIn(number, value) {
+  return updateUser(number, value
+    ? { broadcastOptIn: true,  optInAt:  new Date().toISOString() }
+    : { broadcastOptIn: false, optOutAt: new Date().toISOString() });
+}
+
+// user শেষ কখন মেসেজ দিয়েছে (২৪ ঘণ্টার window বোঝার জন্য) — প্রতি মিনিটে সর্বোচ্চ একবার লেখা হয়
+function touchInbound(number) {
+  const users = getUsers();
+  const i = users.findIndex(x => normalizeNumber(x.number) === normalizeNumber(number));
+  if (i === -1) return;
+  const last = users[i].lastInboundAt ? new Date(users[i].lastInboundAt).getTime() : 0;
+  if (Date.now() - last < 60 * 1000) return;
+  users[i].lastInboundAt = new Date().toISOString();
+  saveUsers(users);
+}
+
+// ═══════════════ BROADCAST (window-aware + template + opt-in) ═══════════════
+// নিয়ম:
+//  • opt-out (.stop) করা user কে কখনো না
+//  • গত ২৪ ঘণ্টায় মেসেজ দিয়েছে → সাধারণ text (সাথে opt-out লাইন)
+//  • window পার → শুধু opt-in (.subscribe) করা user কে, approved template দিয়ে (template সেট না থাকলে বাদ)
+const WINDOW_MS = 23.5 * 60 * 60 * 1000; // ২৪ ঘণ্টা, সামান্য নিরাপদ margin
+const BROADCAST_FOOTER = "\n\n(এই ধরনের মেসেজ বন্ধ করতে লিখুন: .stop)";
+
+function planBroadcast() {
+  const plan   = { free: [], template: [], skipOptOut: [], skipNotOptIn: [], skipNoTemplate: [] };
+  const hasTpl = !!CONFIG.BROADCAST_TEMPLATE_NAME;
+  for (const u of getUsers().filter(x => x.active !== false)) {
+    if (u.broadcastOptIn === false) { plan.skipOptOut.push(u); continue; }
+    const inWindow = u.lastInboundAt && Date.now() - new Date(u.lastInboundAt).getTime() < WINDOW_MS;
+    if (inWindow)                   { plan.free.push(u); continue; }
+    if (u.broadcastOptIn !== true)  { plan.skipNotOptIn.push(u); continue; }
+    if (!hasTpl)                    { plan.skipNoTemplate.push(u); continue; }
+    plan.template.push(u);
+  }
+  return plan;
+}
+
+// sendText এর মতো নয় — error গিলে ফেলে না, report এর জন্য কোড ফেরত দেয়
+async function sendRaw(payload) {
+  try {
+    await axios.post(`${WA_BASE()}/messages`, { messaging_product: "whatsapp", ...payload }, { headers: WA_HEADERS() });
+    return { ok: true };
+  } catch (e) {
+    const err = e.response?.data?.error;
+    return { ok: false, code: err?.code ?? e.response?.status ?? "ERR", message: err?.message || e.message };
+  }
+}
+const sendTextRaw = (to, body) => sendRaw({ to, type: "text", text: { body } });
+
+// Meta template parameter এ নতুন লাইন/ট্যাব/৪+ স্পেস চলে না
+const tplParam = (s) => String(s).replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim().slice(0, 900);
+const sendTemplateRaw = (to, text) => sendRaw({
+  to, type: "template",
+  template: {
+    name: CONFIG.BROADCAST_TEMPLATE_NAME,
+    language: { code: CONFIG.BROADCAST_TEMPLATE_LANG },
+    components: [{ type: "body", parameters: [{ type: "text", text: tplParam(text) }] }],
+  },
+});
+
+let broadcastRunning = false;
+async function runBroadcast(message) {
+  if (broadcastRunning) return null;
+  broadcastRunning = true;
+  const plan = planBroadcast();
+  const report = {
+    time: new Date().toISOString(),
+    message: message.slice(0, 200),
+    counts: {
+      free: 0, template: 0, failed: 0,
+      skippedOptOut: plan.skipOptOut.length,
+      skippedNotOptIn: plan.skipNotOptIn.length,
+      skippedNoTemplate: plan.skipNoTemplate.length,
+    },
+    failures: [],
+    stoppedEarly: null,
+  };
+
+  try {
+    const queue = [...plan.free.map(u => ({ u, via: "free" })), ...plan.template.map(u => ({ u, via: "template" }))];
+    for (const { u, via } of queue) {
+      const to = normalizeNumber(u.number);
+      const r  = via === "free" ? await sendTextRaw(to, message + BROADCAST_FOOTER) : await sendTemplateRaw(to, message);
+      if (r.ok) {
+        report.counts[via]++;
+      } else {
+        report.counts.failed++;
+        report.failures.push({ number: to, via, code: r.code, message: String(r.message).slice(0, 150) });
+        if (STOP_BROADCAST_CODES.includes(Number(r.code))) {
+          report.stoppedEarly = `Meta error ${r.code}: ${WA_ERROR_HINTS[r.code] || r.message}`;
+          recordMetaEvent({
+            kind: "broadcast", code: r.code, severity: "critical",
+            title: `Broadcast থামানো হয়েছে (কোড ${r.code})`,
+            summary: WA_ERROR_HINTS[r.code] || String(r.message).slice(0, 150),
+            raw: { number: to, via, error: r },
+          });
+          break;
+        }
+      }
+      await sleep(400); // rate-limit এড়াতে
+    }
+  } finally {
+    const log = getBroadcastLog();
+    log.push(report);
+    if (log.length > 50) log.splice(0, log.length - 50);
+    saveJSON(BROADCAST_LOG_FILE, log);
+    broadcastRunning = false;
+  }
+  console.log(`📢 Broadcast done:`, JSON.stringify(report.counts), report.stoppedEarly || "");
+  return report;
+}
+
 // ─────────────────── SV REQUEST FLOW (SV1 → ঐচ্ছিক SV2) ───────────────────
 const pendingSV2 = new Map();
 const PENDING_SV2_TTL = 15 * 60 * 1000;
@@ -1883,10 +2151,23 @@ async function handleSVRequest(from, nid, dob, mode = "sv") {
 async function handleIncoming(msg, contact) {
   const from  = msg.from;
   const msgId = msg.id;
+  touchInbound(from); // ✅ শেষ মেসেজের সময় — ২৪ ঘণ্টার window বোঝার জন্য
 
   if (msg.type === "text") {
     const rawText = msg.text.body.trim();
     const text    = rawText.toLowerCase();
+
+    // ── 📢 Broadcast opt-out / opt-in (সবার জন্য, authorized না হলেও) ──
+    if (["stop", ".stop", "/stop", "unsubscribe", ".unsubscribe"].includes(text)) {
+      markRead(msgId);
+      setBroadcastOptIn(from, false);
+      return sendText(from, "✅ আপনাকে নোটিশ/broadcast মেসেজের তালিকা থেকে বাদ দেওয়া হয়েছে।\nআবার চালু করতে লিখুন: .subscribe\n(আপনার কার্ড সার্ভিস আগের মতোই চলবে)");
+    }
+    if ([".subscribe", "subscribe", "/subscribe"].includes(text)) {
+      markRead(msgId);
+      if (!setBroadcastOptIn(from, true)) return sendText(from, "❌ আপনি authorized নন।");
+      return sendText(from, "✅ আপনি নোটিশ/broadcast মেসেজ পেতে সম্মতি দিয়েছেন।\nবন্ধ করতে যেকোনো সময় লিখুন: .stop");
+    }
 
     // ── .sv / .sv off command ──
 // ── .sv / .sv off command (Auto set V4 on .sv) ──
@@ -2155,7 +2436,7 @@ async function handleIncoming(msg, contact) {
 
 // ──────────────────── EXPRESS SERVER ────────────────────────────
 const app = express();
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "50mb", verify: (req, res, buf) => { req.rawBody = buf; } })); // rawBody → signature যাচাই
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.get("/webhook", (req, res) => {
@@ -2170,15 +2451,28 @@ app.get("/webhook", (req, res) => {
 });
 
 app.post("/webhook", async (req, res) => {
+  // ✅ জাল webhook ঠেকাতে Meta এর signature যাচাই (WHATSAPP_APP_SECRET সেট থাকলে)
+  if (!verifyMetaSignature(req)) {
+    console.warn("⛔ Webhook signature মেলেনি — প্রত্যাখ্যান করা হলো");
+    return res.sendStatus(401);
+  }
   res.sendStatus(200);
   try {
-    const entry    = req.body.entry?.[0];
-    const change   = entry?.changes?.[0]?.value;
-    const messages = change?.messages || [];
-    const contacts = change?.contacts || [];
-    for (const msg of messages) {
-      if (isDuplicateMessage(msg.id)) { console.log("⏭️ Duplicate webhook skipped:", msg.id); continue; } // ✅
-      await handleIncoming(msg, contacts[0]);
+    for (const entry of req.body.entry || []) {
+      for (const change of entry.changes || []) {
+        const value = change.value || {};
+        const field = change.field || "messages";
+
+        // account_update, quality, template ইত্যাদি — log + গুরুতর হলে admin কে alert
+        if (field !== "messages") { handleAccountEvent(field, value); continue; }
+
+        for (const st of value.statuses || []) handleStatus(st); // sent/delivered/read/failed
+
+        for (const msg of value.messages || []) {
+          if (isDuplicateMessage(msg.id)) { console.log("⏭️ Duplicate webhook skipped:", msg.id); continue; }
+          await handleIncoming(msg, (value.contacts || [])[0]);
+        }
+      }
     }
   } catch (e) { console.error("Webhook error:", e.message); }
 });
@@ -2248,6 +2542,9 @@ details.card[open]>.sum{margin-bottom:14px}
 .pill.pdf{background:#14284d;color:#7cb4ff}
 .pill.sv{background:#3a2d08;color:var(--warn)}
 .pill.sv2{background:#2d1a5c;color:#b9a2ff}
+.pill.crit{background:#3b0f1a;color:var(--bad)}
+.pill.warn{background:#3a2d08;color:var(--warn)}
+.pill.info{background:#14284d;color:#7cb4ff}
 /* users */
 .users{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
 .u{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px;scroll-margin-top:70px}
@@ -2309,6 +2606,7 @@ function adminPage(title, body, active = "home") {
   <nav>
     <a class="${active === "home" ? "on" : ""}" href="/admin">📊 Dashboard</a>
     <a class="${active === "resp" ? "on" : ""}" href="/admin/responses">🗂 Responses</a>
+    <a class="${active === "meta" ? "on" : ""}" href="/admin/meta">📡 Meta</a>
     <a href="/admin/logout">🚪 Logout</a>
   </nav>
 </header>
@@ -2356,6 +2654,8 @@ app.get("/admin", adminAuth, (req, res) => {
   const stats    = getStats();
   const settings = getSettings();
   const today    = getTodayActivitySummary();
+  const plan     = planBroadcast();
+  const lastB    = getBroadcastLog().slice(-1)[0];
 
   const todayJobs  = today.reduce((s, r) => s + r.jobs, 0);
   const todayRev   = today.reduce((s, r) => s + r.spent, 0);
@@ -2385,6 +2685,7 @@ app.get("/admin", adminAuth, (req, res) => {
     const pv    = (v) => (v !== undefined && v !== null && v !== "") ? v : "";
     const ini   = esc(((u.name || num) + "").trim().charAt(0).toUpperCase() || "#");
     const curMode = u.serviceMode || "default";
+    const optTxt  = u.broadcastOptIn === true ? "✅ Opt-in" : u.broadcastOptIn === false ? "🚫 Opt-out" : "— Opt-in নেই";
     const svTag   = curMode === "sv" ? `<span class="pill sv">SV Mode</span>` : curMode === "vip" ? `<span class="pill sv2">VIP Mode</span>` : "";
     // ✅ admin নিজে user এর mode চালু করতে পারবে (user এর .sv / .vip পাঠানোর সমতুল্য)
     const segBtn = (m, label, enabled) => `
@@ -2406,6 +2707,7 @@ app.get("/admin", adminAuth, (req, res) => {
         <div style="text-align:right"><small>মোট কার্ড: <b style="font-size:13px">${s.count}</b></small><br><small>${fmtTime(s.lastUsed)}</small><br>${svTag}</div>
       </div>
 
+      <div class="cap">📢 ${optTxt} · শেষ মেসেজ: ${fmtTime(u.lastInboundAt)}</div>
       <form class="money" method="POST" action="/admin/recharge">
         <input type="hidden" name="number" value="${esc(num)}"/>
         <input name="amount" type="number" inputmode="decimal" min="1" step="any" placeholder="টাকার পরিমাণ লিখুন" required/>
@@ -2485,11 +2787,18 @@ app.get("/admin", adminAuth, (req, res) => {
 
   <div class="grid2" style="margin-top:12px">
     <details class="card">
-      <summary class="sum">📢 Broadcast (সব active user কে)</summary>
-      <form method="POST" action="/admin/broadcast">
+      <summary class="sum">📢 Broadcast</summary>
+      <p class="muted" style="margin-bottom:10px">
+        ✉️ সাধারণ text: <b>${plan.free.length}</b> · 🧾 Template: <b>${plan.template.length}</b> ·
+        ⏭ বাদ: <b>${plan.skipOptOut.length + plan.skipNotOptIn.length + plan.skipNoTemplate.length}</b>
+        <a href="/admin/meta">(বিস্তারিত)</a><br>
+        ${lastB ? `শেষ broadcast: ${fmtTime(lastB.time)} — গেছে ${lastB.counts.free + lastB.counts.template}, ব্যর্থ ${lastB.counts.failed}${lastB.stoppedEarly ? " ⛔ থামানো হয়েছে" : ""}` : "এখনো কোনো broadcast হয়নি"}
+      </p>
+      <form method="POST" action="/admin/broadcast" onsubmit="return confirm('${plan.free.length + plan.template.length} জনকে পাঠানো হবে। নিশ্চিত?')">
         <textarea name="message" rows="4" required placeholder="যেমন: ✅ Bot On করা হয়েছে, এখন থেকে NID Card বানাতে পারবেন।" style="margin-bottom:10px"></textarea>
-        <button class="btn" style="width:100%">📤 সবাইকে পাঠান</button>
+        <button class="btn" style="width:100%">📤 পাঠান (${plan.free.length + plan.template.length} জন)</button>
       </form>
+      <p class="muted" style="margin-top:8px">opt-out (.stop) করা user কে কখনো পাঠানো হয় না। ২৪ ঘণ্টার window পার হলে শুধু opt-in (.subscribe) করা user কে approved template দিয়ে যায়।</p>
     </details>
     <div class="card">
       <div class="sum" style="margin-bottom:12px">🔌 সিস্টেম স্ট্যাটাস</div>
@@ -2631,6 +2940,120 @@ app.get("/admin/response/:id", adminAuth, (req, res) => {
   res.send(adminPage("Response", body, "resp"));
 });
 
+// ── 📡 Meta / WhatsApp স্বাস্থ্য পেজ ──
+const sevPill = (s) => `<span class="pill ${s === "critical" ? "crit" : s === "warn" ? "warn" : "info"}">${esc(s)}</span>`;
+
+app.get("/admin/meta", adminAuth, (req, res) => {
+  const events   = getEvents().slice().reverse();
+  const counters = loadJSON(COUNTERS_FILE, {});
+  const days     = Object.keys(counters).sort().reverse().slice(0, 7);
+  const ph       = lastPhoneHealth;
+  const bLog     = getBroadcastLog().slice(-10).reverse();
+  const plan     = planBroadcast();
+
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const byCode = {};
+  events.filter(e => e.kind === "status_failed" && new Date(e.time).getTime() > cutoff)
+        .forEach(e => { byCode[e.code] = (byCode[e.code] || 0) + 1; });
+
+  const qPill = (q) => q ? `<span class="pill ${q === "GREEN" ? "on" : q === "RED" ? "off" : "sv"}">${esc(q)}</span>` : "—";
+  const d = ph?.data || {};
+  const healthBody = !ph
+    ? `<p class="muted">এখনো চেক করা হয়নি। নিচের বাটন চাপুন।</p>`
+    : ph.ok
+      ? `<div class="stats">
+          ${statBox("Quality", qPill(d.quality_rating))}
+          ${statBox("Messaging limit", esc(d.messaging_limit_tier || "—"))}
+          ${statBox("Status", esc(d.status || "—"))}
+          ${statBox("Name status", esc(d.name_status || "—"))}
+        </div>
+        <p class="muted" style="margin-top:8px">${esc(d.verified_name || "")} ${esc(d.display_phone_number || "")} · চেক: ${fmtTime(ph.time)}</p>`
+      : `<p class="err">❌ Meta থেকে তথ্য আনা যায়নি: ${esc(ph.error)}</p><p class="muted">${fmtTime(ph.time)} · টোকেনে whatsapp_business_management permission আছে কিনা দেখুন।</p>`;
+
+  const codeRows = Object.entries(byCode).sort((a, b) => b[1] - a[1]).map(([c, n]) =>
+    `<div class="li"><div><div class="a">কোড ${esc(c)} <span class="muted">× ${n}</span></div><div class="b">${esc(WA_ERROR_HINTS[c] || "Meta এর error-code docs দেখুন")}</div></div></div>`).join("")
+    || `<p class="muted">গত ২৪ ঘণ্টায় কোনো failed মেসেজ নেই।</p>`;
+
+  const dayRows = days.map(k => {
+    const c = counters[k];
+    return `<tr><td>${esc(k)}</td><td>${c.sent}</td><td>${c.delivered}</td><td>${c.read}</td><td style="color:${c.failed ? "var(--bad)" : "inherit"};font-weight:700">${c.failed}</td></tr>`;
+  }).join("") || `<tr><td colspan="5" class="muted" style="text-align:center;padding:14px">এখনো কোনো status webhook আসেনি</td></tr>`;
+
+  const evRows = events.slice(0, 100).map(e => `<div class="li">
+      <div><div class="a">${sevPill(e.severity)} ${esc(e.title)}</div><div class="b">${fmtTime(e.time)}${e.summary ? " · " + esc(e.summary) : ""}</div></div>
+      <a class="btn ghost sm" href="/admin/meta/event/${esc(e.id)}">raw</a>
+    </div>`).join("") || `<p class="muted">এখনো কোনো Meta event আসেনি। (Webhook এ নিচের field গুলো subscribe করা আছে কিনা দেখুন)</p>`;
+
+  const bRows = bLog.map(b => `<div class="li">
+      <div>
+        <div class="a">${fmtTime(b.time)} <span class="muted">${esc(b.message.slice(0, 50))}</span></div>
+        <div class="b">সাধারণ: ${b.counts.free} · Template: ${b.counts.template} · ব্যর্থ: ${b.counts.failed} · বাদ (opt-out ${b.counts.skippedOptOut}, opt-in নেই ${b.counts.skippedNotOptIn}, template নেই ${b.counts.skippedNoTemplate})</div>
+        ${b.stoppedEarly ? `<div class="b" style="color:var(--bad)">⛔ থামানো হয়েছে: ${esc(b.stoppedEarly)}</div>` : ""}
+        ${b.failures.slice(0, 5).map(f => `<div class="b">↳ ${esc(f.number)} — ${esc(f.code)} ${esc(WA_ERROR_HINTS[f.code] || f.message)}</div>`).join("")}
+      </div></div>`).join("") || `<p class="muted">এখনো কোনো broadcast পাঠানো হয়নি।</p>`;
+
+  const flag = (ok, label) => `<span class="pill ${ok ? "on" : "off"}">${label} ${ok ? "✓" : "✗"}</span>`;
+
+  const body = `
+  <h2 class="sec" style="margin-top:4px">📡 Account স্বাস্থ্য <span>Meta যা জানায়, হুবহু</span></h2>
+  <div class="card">
+    ${healthBody}
+    <form method="POST" action="/admin/meta/check" style="margin-top:12px"><button class="btn">🔄 এখনই চেক করুন</button></form>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div class="card">
+      <div class="sum" style="margin-bottom:10px">⚙️ সেটআপ অবস্থা</div>
+      <div class="row" style="margin-bottom:10px">
+        ${flag(!!CONFIG.WA_APP_SECRET, "App Secret (signature)")}
+        ${flag(!!CONFIG.ADMIN_WA_NUMBER, "Admin alert নম্বর")}
+        ${flag(!!CONFIG.BROADCAST_TEMPLATE_NAME, "Broadcast template")}
+      </div>
+      <p class="muted">Meta App → WhatsApp → Configuration → Webhook এ এই field গুলো subscribe করুন:<br>
+      <code>messages, account_update, phone_number_quality_update, account_review_update, message_template_status_update, message_template_quality_update</code></p>
+    </div>
+    <div class="card">
+      <div class="sum" style="margin-bottom:10px">📢 পরের Broadcast এর শ্রোতা</div>
+      <div class="li"><span>✉️ সাধারণ text (২৪ ঘণ্টায় মেসেজ করেছে)</span><b>${plan.free.length}</b></div>
+      <div class="li"><span>🧾 Template (opt-in, window পার)</span><b>${plan.template.length}</b></div>
+      <div class="li"><span class="muted">⏭ বাদ — opt-out</span><b>${plan.skipOptOut.length}</b></div>
+      <div class="li"><span class="muted">⏭ বাদ — opt-in নেই, window পার</span><b>${plan.skipNotOptIn.length}</b></div>
+      <div class="li"><span class="muted">⏭ বাদ — template সেট নেই</span><b>${plan.skipNoTemplate.length}</b></div>
+    </div>
+  </div>
+
+  <h2 class="sec">📈 মেসেজ ডেলিভারি <span>শেষ ৭ দিন</span></h2>
+  <div class="card tw" style="padding:6px 10px">
+    <table style="min-width:420px"><thead><tr><th>দিন</th><th>Sent</th><th>Delivered</th><th>Read</th><th>Failed</th></tr></thead><tbody>${dayRows}</tbody></table>
+  </div>
+
+  <h2 class="sec">⚠️ Failed এর কারণ <span>গত ২৪ ঘণ্টা · ব্যাখ্যা সাধারণ অর্থ, নিশ্চিত হতে Meta docs দেখুন</span></h2>
+  <div class="card">${codeRows}</div>
+
+  <h2 class="sec">🔔 Meta Events <span>সর্বশেষ ১০০টা</span></h2>
+  <div class="card">${evRows}</div>
+
+  <h2 class="sec">📢 Broadcast ইতিহাস <span>সর্বশেষ ১০টা</span></h2>
+  <div class="card">${bRows}</div>`;
+
+  res.send(adminPage("Meta Health", body, "meta"));
+});
+
+app.post("/admin/meta/check", adminAuth, async (req, res) => {
+  await fetchPhoneHealth();
+  res.redirect("/admin/meta");
+});
+
+app.get("/admin/meta/event/:id", adminAuth, (req, res) => {
+  const e = getEvents().find(x => x.id === req.params.id);
+  if (!e) return res.status(404).send(adminPage("Not found", `<div class="card">Event পাওয়া যায়নি। <a href="/admin/meta">← ফিরে যান</a></div>`, "meta"));
+  res.send(adminPage("Meta Event", `
+    <a href="/admin/meta">← Meta Health</a>
+    <h2 class="sec" style="margin-top:14px">${sevPill(e.severity)} ${esc(e.title)} <span>${fmtTime(e.time)}</span></h2>
+    ${e.summary ? `<p class="muted" style="margin-bottom:10px">${esc(e.summary)}</p>` : ""}
+    <pre class="code">${esc(JSON.stringify(e.raw, null, 2))}</pre>`, "meta"));
+});
+
 // ── Actions ──
 app.post("/admin/add", adminAuth, (req, res) => {
   const users = getUsers();
@@ -2753,19 +3176,10 @@ app.post("/admin/backup", adminAuth, async (req, res) => {
 
 app.post("/admin/broadcast", adminAuth, async (req, res) => {
   const message = (req.body.message || "").trim();
-  res.redirect("/admin");
+  res.redirect(message ? "/admin/meta" : "/admin");
   if (!message) return;
-
-  const users = getUsers().filter(u => u.active !== false);
-  (async () => {
-    let sent = 0;
-    for (const u of users) {
-      await sendText(normalizeNumber(u.number), message);
-      sent++;
-      await new Promise(r => setTimeout(r, 300)); // rate-limit এড়াতে
-    }
-    console.log(`✅ Broadcast sent to ${sent}/${users.length} users`);
-  })();
+  // opt-out / ২৪ ঘণ্টার window / template নিয়ম runBroadcast এর ভেতরে প্রয়োগ হয়
+  runBroadcast(message).catch(err => console.error("Broadcast error:", err.message));
 });
 
 function cleanupOldFiles() {
@@ -2804,6 +3218,9 @@ setInterval(() => { try { pruneResponses(); } catch (e) { console.error("prune e
   if (!CONFIG.SV_API1_KEY) console.warn("⚠️ SV_API1_KEY env সেট করা নেই — SV1 কাজ করবে না");
   if (!CONFIG.SV_API2_URL || !CONFIG.SV_API2_KEY) console.warn("ℹ️ SV_API2_URL / SV_API2_KEY সেট নেই — SV2 (VIP) বন্ধ থাকবে");
   if (CONFIG.ADMIN_PASS === "admin123") console.warn("⚠️ ADMIN_PASS এখনো ডিফল্ট (admin123) — env এ বদলে দিন");
+  if (!CONFIG.WA_APP_SECRET) console.warn("⚠️ WHATSAPP_APP_SECRET সেট নেই — webhook signature যাচাই বন্ধ (যে কেউ জাল মেসেজ পাঠাতে পারে)");
+  if (!CONFIG.ADMIN_WA_NUMBER) console.warn("ℹ️ ADMIN_WA_NUMBER সেট নেই — গুরুতর Meta alert WhatsApp এ আসবে না (শুধু /admin/meta এ দেখা যাবে)");
+  if (!CONFIG.BROADCAST_TEMPLATE_NAME) console.warn("ℹ️ BROADCAST_TEMPLATE_NAME সেট নেই — ২৪ ঘণ্টার window পার হলে broadcast যাবে না");
 
   app.listen(CONFIG.PORT, "0.0.0.0", () => {
     console.log(`🚀 NID Bot running on port ${CONFIG.PORT}`);
