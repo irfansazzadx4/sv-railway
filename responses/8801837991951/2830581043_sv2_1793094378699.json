@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ মনিরুজ্জামান মানিক",
+      "nameEn": "Md Moniruzzaman Manik",
+      "gender": "",
+      "father": "আব্দুল খালেক",
+      "mother": "হালিমা খাতুন",
+      "nationalId": "2830581043",
+      "pin": "19761917284656513",
+      "oldNid": "1917284656513",
+      "voter_no": "190143656513",
+      "voter_area_code": "190143",
+      "sl_no": 141,
+      "voterArea": "আশকামতা (190143)",
+      "occupation": "শ্রমিক",
+      "bloodGroup": "",
+      "birthPlace": "কুমিল্লা",
+      "dateOfBirth": "1976-03-10",
+      "birthDay": "বুধবার",
+      "age": "৫০ বছর ৭ মাস ১৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ মুন্সী বাড়ী, গ্রাম/রাস্তাঃ আশকামতা, মধ্যম পাড়া, মৌজা/মহল্লাঃ আশকামতা, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ আজগরা, থানাঃ , উপজেলাঃ , জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ মুন্সী বাড়ী, গ্রাম/রাস্তাঃ আশকামতা, মধ্যম পাড়া, মৌজা/মহল্লাঃ আশকামতা, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ আজগরা, থানাঃ , উপজেলাঃ , জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/037474442ecc264f7e0bcee1447ef500.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1371,
+    "today_success": 960,
+    "today_cost": 14400,
+    "total_success": 1702,
+    "total_bill": 25530,
+    "speed": "20.449s"
+  }
+}
