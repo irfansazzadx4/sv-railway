@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "নুরুল আমিন",
+      "nameEn": "Nurul Amin",
+      "gender": "",
+      "father": "আবদুল করিম",
+      "mother": "সামছুর নাহার",
+      "nationalId": "8229864528",
+      "pin": "19671917287669701",
+      "oldNid": "1917287669701",
+      "voter_no": "190163669701",
+      "voter_area_code": "190163",
+      "sl_no": 164,
+      "voterArea": "খিলপাড়া (190163)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "কুমিল্লা",
+      "dateOfBirth": "1967-01-01",
+      "birthDay": "রবিবার",
+      "age": "৫৯ বছর ৯ মাস ২৬ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ খিলপাড়া মেয়াজী বাড়ি, গ্রাম/রাস্তাঃ চন্ডিপুর, মৌজা/মহল্লাঃ খিলপাড়া, ওয়ার্ড নংঃ ৮, ইউনিয়ন/পৌরসভাঃ উত্তরদা, থানাঃ লাকসাম, উপজেলাঃ লাকসাম, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ খিলপাড়া মেয়াজী বাড়ি, গ্রাম/রাস্তাঃ চন্ডিপুর, মৌজা/মহল্লাঃ খিলপাড়া, ওয়ার্ড নংঃ ৮, ইউনিয়ন/পৌরসভাঃ উত্তরদা, থানাঃ লাকসাম, উপজেলাঃ লাকসাম, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "লাকসাম",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "লাকসাম",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/42c81b440fce77b1301ef56b0002393e.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 630,
+    "today_success": 405,
+    "today_cost": 6075,
+    "total_success": 1147,
+    "total_bill": 17205,
+    "speed": "5.9s"
+  }
+}
