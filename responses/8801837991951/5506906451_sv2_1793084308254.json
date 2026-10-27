@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "আফসানা",
+      "nameEn": "Afsana",
+      "gender": "female",
+      "father": "আঃ রহমান",
+      "mother": "হাসীনা বেগম",
+      "nationalId": "5506906451",
+      "pin": "19866710271241465",
+      "oldNid": "6710271241465",
+      "voter_no": "670230241465",
+      "voter_area_code": "670230",
+      "sl_no": "264",
+      "voterArea": "মাহমুদপুর (670230)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "নারায়ণগঞ্জ",
+      "dateOfBirth": "1986-10-13",
+      "birthDay": "সোমবার",
+      "age": "৪০ বছর ০ মাস ১৪ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ মাহমুদপুর, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ৫, ইউনিয়ন/পৌরসভাঃ আড়াইহাজার পৌরসভা, থানাঃ আড়াইহাজার, ডাকঘরঃ শ্রীনিবাসদী - ১৪৫০, উপজেলাঃ আড়াইহাজার, জেলাঃ নারায়ণগঞ্জ, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ মাহমুদপুর, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ৫, ইউনিয়ন/পৌরসভাঃ আড়াইহাজার পৌরসভা, থানাঃ আড়াইহাজার, ডাকঘরঃ শ্রীনিবাসদী - ১৪৫০, উপজেলাঃ আড়াইহাজার, জেলাঃ নারায়ণগঞ্জ, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "নারায়ণগঞ্জ",
+        "upozila": "আড়াইহাজার",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "নারায়ণগঞ্জ",
+        "upozila": "আড়াইহাজার",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/2970e94f24abc6213e3c7177c3864070.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 731,
+    "today_success": 476,
+    "today_cost": 7140,
+    "total_success": 1218,
+    "total_bill": 18270,
+    "speed": "8.702s"
+  }
+}
