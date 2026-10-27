@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "‌কাজী সামিনা সুলতানা",
+      "nameEn": "Kazi Shamina Sultana",
+      "gender": "female",
+      "father": "কাজী এম. এস. আলম",
+      "mother": "রওশন আরা বেগম",
+      "nationalId": "8672913327",
+      "pin": "19862696654290596",
+      "oldNid": "2696654290596",
+      "voter_no": "261405290596",
+      "voter_area_code": "261405",
+      "sl_no": "1418",
+      "voterArea": "উত্তর নয়াটোলা ১ম ভাগ(পুর্ব অংশ) (261405)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1986-01-06",
+      "birthDay": "সোমবার",
+      "age": "৪০ বছর ৯ মাস ২১ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ উত্তর নয়াটোলা ১ম ভাগ(পুর্ব অংশ), মৌজা/মহল্লাঃ ৫০৪ নয়াটোলা চেয়ারম্যান গলি, ওয়ার্ড নংঃ ৩৫, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ রমনা, ডাকঘরঃ শান্তিনগর - ১২১৭, উপজেলাঃ রমনা, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ উত্তর নয়াটোলা ১ম ভাগ(পুর্ব অংশ), মৌজা/মহল্লাঃ ৫০৪ নয়াটোলা চেয়ারম্যান গলি, ওয়ার্ড নংঃ ৩৫, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ রমনা, ডাকঘরঃ শান্তিনগর - ১২১৭, উপজেলাঃ রমনা, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "রমনা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "রমনা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/14e70c5ba4f383b85c3fdc51db8be4d4.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 2001,
+    "today_success": 1438,
+    "today_cost": 21570,
+    "total_success": 2180,
+    "total_bill": 32700,
+    "speed": "1.519s"
+  }
+}
