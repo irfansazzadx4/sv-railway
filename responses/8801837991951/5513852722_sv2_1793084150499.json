@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "রায়হানা বেগম",
+      "nameEn": "Rihana Begum",
+      "gender": "female",
+      "father": "আব্দুর রহমান",
+      "mother": "হাসিনা বেগম",
+      "nationalId": "5513852722",
+      "pin": "19742693624617519",
+      "oldNid": "2693624617519",
+      "voter_no": "261138617519",
+      "voter_area_code": "261138",
+      "sl_no": "2129",
+      "voterArea": "খিলগাঁও এ জোন-১ (261138)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1974-11-22",
+      "birthDay": "শুক্রবার",
+      "age": "৫১ বছর ১১ মাস ৫ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ খিলগাঁও এ জোন-১, মৌজা/মহল্লাঃ ৪০৩/এ খিলগাঁও চৌরাস্তা, ওয়ার্ড নংঃ ০১, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ খিলগাঁও, ডাকঘরঃ খিলগাঁও - ১২১৯, উপজেলাঃ খিলগাঁও, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ খিলগাঁও এ জোন-১, মৌজা/মহল্লাঃ ৪০৩/এ খিলগাঁও চৌরাস্তা, ওয়ার্ড নংঃ ০১, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ খিলগাঁও, ডাকঘরঃ খিলগাঁও - ১২১৯, উপজেলাঃ খিলগাঁও, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "খিলগাঁও",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "খিলগাঁও",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/466e44be64fd52894803f41d6c815e69.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 714,
+    "today_success": 466,
+    "today_cost": 6990,
+    "total_success": 1208,
+    "total_bill": 18120,
+    "speed": "2.068s"
+  }
+}
