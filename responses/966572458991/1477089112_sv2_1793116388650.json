@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোছাঃ লিতা খাতুন",
+      "nameEn": "Mst Lita Khatun",
+      "gender": "female",
+      "father": "মোঃ লিয়াকত আলী",
+      "mother": "মোছাঃ রাশিদা বেগম",
+      "nationalId": "1477089112",
+      "pin": "19833218213572462",
+      "oldNid": "3218213572462",
+      "voter_no": "320590572462",
+      "voter_area_code": "320590",
+      "sl_no": "666",
+      "voterArea": "কিশামত শেরপুর (320590)",
+      "occupation": "ছাত্র/ছাত্রী",
+      "bloodGroup": "",
+      "birthPlace": "গাইবান্দা",
+      "dateOfBirth": "1983-02-15",
+      "birthDay": "মঙ্গলবার",
+      "age": "৪৩ বছর ৮ মাস ১২ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ কিশামত শেরপুর, মৌজা/মহল্লাঃ কিশামত শেরপুর, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ শেরপুর পৌরসভা, থানাঃ সাদুল্লাপুর, ডাকঘরঃ সাদুল্যাপুর - ৫৭১০, উপজেলাঃ সাদুল্লাপুর, জেলাঃ গাইবান্দা, বিভাগঃ রংপুর",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ কিশামত শেরপুর, মৌজা/মহল্লাঃ কিশামত শেরপুর, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ শেরপুর পৌরসভা, থানাঃ সাদুল্লাপুর, ডাকঘরঃ সাদুল্যাপুর - ৫৭১০, উপজেলাঃ সাদুল্লাপুর, জেলাঃ গাইবান্দা, বিভাগঃ রংপুর",
+      "permanentAddr": {
+        "division": "রংপুর",
+        "district": "গাইবান্দা",
+        "upozila": "সাদুল্লাপুর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "রংপুর",
+        "district": "গাইবান্দা",
+        "upozila": "সাদুল্লাপুর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/3722a3656bf2bafdcfd61dc6c5e81ec1.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1974,
+    "today_success": 1414,
+    "today_cost": 21210,
+    "total_success": 2156,
+    "total_bill": 32340,
+    "speed": "1.547s"
+  }
+}
