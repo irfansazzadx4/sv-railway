@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "বশির আহমাদ",
+      "nameEn": "Basir  Ahmad",
+      "gender": "male",
+      "father": "জনাব মাওলানা আব্দুর রহমান",
+      "mother": "মোসাঃ হাসিনা বেগম",
+      "nationalId": "8213879516",
+      "pin": "19802613451277001",
+      "oldNid": "2613451277001",
+      "voter_no": "261909277001",
+      "voter_area_code": "261909",
+      "sl_no": "723",
+      "voterArea": "আশ্রাফাবাদ (261909)",
+      "occupation": "শিক্ষক",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1980-07-25",
+      "birthDay": "শুক্রবার",
+      "age": "৪৬ বছর ৩ মাস ২ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ এন-৫৫ আশ্রাফাবাদ, গ্রাম/রাস্তাঃ আশ্রাফাবাদ, মৌজা/মহল্লাঃ আশ্রাফাবাদ, ওয়ার্ড নংঃ ৫৭, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ কামরাঙ্গীর চর, ডাকঘরঃ পোস্তা - ১২১১, উপজেলাঃ কামরাঙ্গীর চর, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ এন-৫৫ আশ্রাফাবাদ, গ্রাম/রাস্তাঃ আশ্রাফাবাদ, মৌজা/মহল্লাঃ আশ্রাফাবাদ, ওয়ার্ড নংঃ ৫৭, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ কামরাঙ্গীর চর, ডাকঘরঃ পোস্তা - ১২১১, উপজেলাঃ কামরাঙ্গীর চর, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "কামরাঙ্গীর চর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "কামরাঙ্গীর চর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/5756455576f6ab7a1679d3b376188ad8.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 984,
+    "today_success": 670,
+    "today_cost": 10050,
+    "total_success": 1412,
+    "total_bill": 21180,
+    "speed": "2.211s"
+  }
+}
