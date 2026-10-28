@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ আবদুল কাদের ভূইয়া",
+      "nameEn": "Md. Abdul Kader Bhuiyan",
+      "gender": "male",
+      "father": "আবদুল মান্নান ভূঁইয়া",
+      "mother": "নূরজাহান বেগম",
+      "nationalId": "4177670751",
+      "pin": "19671926708136734",
+      "oldNid": "1926708136734",
+      "voter_no": "261361642346",
+      "voter_area_code": "261361",
+      "sl_no": "2351",
+      "voterArea": "গ্রীনরোড পূর্ব (261361)",
+      "occupation": "আইনজীবী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1967-12-31",
+      "birthDay": "রবিবার",
+      "age": "৫৮ বছর ৯ মাস ২৮ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ক্ল্যাট-ই/৫, গ্রাম/রাস্তাঃ গ্রীনরোড পূর্ব, মৌজা/মহল্লাঃ ১৪, গ্রীন রোড, ওয়ার্ড নংঃ ১৬, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ ধানমন্ডি, ডাকঘরঃ নিউ মার্কেট - ১২০৫, উপজেলাঃ ধানমন্ডি, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ক্ল্যাট-ই/৫, গ্রাম/রাস্তাঃ গ্রীনরোড পূর্ব, মৌজা/মহল্লাঃ ১৪, গ্রীন রোড, ওয়ার্ড নংঃ ১৬, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ ধানমন্ডি, ডাকঘরঃ নিউ মার্কেট - ১২০৫, উপজেলাঃ ধানমন্ডি, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "ধানমন্ডি",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "ধানমন্ডি",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/8b58db6cbda04e226fae0763bb1e52b2.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 607,
+    "today_success": 496,
+    "today_cost": 7440,
+    "total_success": 2691,
+    "total_bill": 40365,
+    "speed": "2.678s"
+  }
+}
