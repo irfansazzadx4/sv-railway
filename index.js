@@ -204,36 +204,64 @@ function recordStat(number) {
   saveStats(stats);
 }
 
-// ✅ প্রতিটা সফল job এর আলাদা log — কে, কখন, কোন API/version, কত টাকা কাটলো, আমাদের API খরচ কত
-function recordTransaction(number, { mode, version, price, nid, name }) {
+// ═══════════════ হিসাব (accounting) ═══════════════
+const TX_ARCHIVE_FILE = path.join(CONFIG.DATA_DIR, "tx_archive.json"); // ৫০০০ এর বেশি পুরনো job এর user-ভিত্তিক যোগফল
+const LEDGER_FILE     = path.join(CONFIG.DATA_DIR, "ledger.json");     // admin recharge / admin-কাটা / auto-refund
+const TX_CAP          = 5000;
+const getTxArchive  = () => loadJSON(TX_ARCHIVE_FILE, {});
+const saveTxArchive = (a) => saveJSON(TX_ARCHIVE_FILE, a);
+const getLedger     = () => loadJSON(LEDGER_FILE, []);
+const saveLedger    = (l) => saveJSON(LEDGER_FILE, l);
+
+// প্রতিটা সফল job এর আলাদা log — কে, কখন, কোন API/version, কত টাকা কাটলো, আমাদের API খরচ কত
+// cached = true হলে আমাদের API খরচ ০ (আসলে কোনো API call হয়নি)
+function recordTransaction(number, { mode, version, price, nid, name, cached }) {
   const txs = getTransactions();
   txs.push({
     number:  normalizeNumber(number),
     mode:    mode    || "pdf",
     version: version || 0,
     price:   price   || 0,
-    cost:    getApiCost(mode), // ✅ আমাদের নিজস্ব API খরচ (লাভের হিসাবের জন্য)
+    cost:    cached ? 0 : getApiCost(mode),
+    cached:  !!cached,
     nid:     nid      || "",
     name:    name     || "",
     time:    new Date().toISOString(),
   });
-  // ফাইল যেন অসীম বড় না হয় — সর্বশেষ ৫০০০ টা entry
-  if (txs.length > 5000) txs.splice(0, txs.length - 5000);
+  // ফাইল বড় না হতে পুরনোগুলো সরানো হয় — কিন্তু হিসাব হারায় না, user-ভিত্তিক যোগফল archive এ জমা হয়
+  if (txs.length > TX_CAP) {
+    const removed = txs.splice(0, txs.length - TX_CAP);
+    const arch = getTxArchive();
+    for (const t of removed) {
+      const a = arch[t.number] || (arch[t.number] = { count: 0, spent: 0, cost: 0 });
+      a.count++; a.spent += t.price || 0; a.cost += t.cost || 0;
+    }
+    saveTxArchive(arch);
+  }
   saveTransactions(txs);
 }
 
-// টাকা কাটার পর card তৈরি fail করলে refund করার জন্য
-function refundBalance(number, amount) {
+// balance এর প্রতিটা নড়াচড়া (admin যোগ/কাটা, refund) এর রেকর্ড
+function recordLedger(number, type, amount, balanceAfter, note = "") {
+  const l = getLedger();
+  l.push({ time: new Date().toISOString(), number: normalizeNumber(number), type, amount, balanceAfter, note });
+  if (l.length > 20000) l.splice(0, l.length - 20000);
+  saveLedger(l);
+}
+
+// টাকা কাটার পর card তৈরি/পাঠানো fail করলে refund
+function refundBalance(number, amount, note = "") {
   if (!amount) return;
   const users = getUsers();
   const idx = users.findIndex(x => normalizeNumber(x.number) === normalizeNumber(number));
   if (idx !== -1) {
     users[idx].balance = (users[idx].balance || 0) + amount;
     saveUsers(users);
+    try { recordLedger(number, "refund", amount, users[idx].balance, note); } catch (e) { console.error("ledger error:", e.message); }
   }
 }
 
-// ✅ "আজ" এখন বাংলাদেশ সময় (Asia/Dhaka) অনুযায়ী — আগে UTC ছিল, তাই সকাল ৬টায় দিন বদলে যেত
+// "আজ" বাংলাদেশ সময় (Asia/Dhaka) অনুযায়ী
 const dhakaDay = (d) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" });
 function isToday(isoTime) {
   return !!isoTime && dhakaDay(isoTime) === dhakaDay(Date.now());
@@ -241,15 +269,17 @@ function isToday(isoTime) {
 
 const sumBy = (arr, k) => arr.reduce((s, t) => s + (t[k] || 0), 0);
 
-// একজন user এর সম্পূর্ণ history + today/total summary
+// একজন user এর সম্পূর্ণ history + today/total summary (archive সহ — তাই ৫০০০ এর পরেও মোট ঠিক থাকে)
 function getUserTxSummary(number) {
   const n     = normalizeNumber(number);
   const all   = getTransactions().filter(t => t.number === n);
   const today = all.filter(t => isToday(t.time));
+  const arch  = getTxArchive()[n] || { count: 0, spent: 0, cost: 0 };
   return {
-    count:      all.length,
-    totalSpent: sumBy(all, "price"),
-    totalCost:  sumBy(all, "cost"),
+    count:      all.length + arch.count,
+    totalSpent: sumBy(all, "price") + arch.spent,
+    totalCost:  sumBy(all, "cost")  + arch.cost,
+    archived:   arch.count,
     todayCount: today.length,
     todaySpent: sumBy(today, "price"),
     todayCost:  sumBy(today, "cost"),
@@ -257,21 +287,41 @@ function getUserTxSummary(number) {
   };
 }
 
-// আজকে কোন user কতটা কাজ করলো, কত টাকা কাটলো, আমাদের কত খরচ — admin dashboard এর জন্য
+// আজকে কোন user কতটা কাজ করলো (PDF / SV1 / VIP আলাদা করে), কত টাকা কাটলো, আমাদের কত খরচ
 function getTodayActivitySummary() {
   const txs   = getTransactions().filter(t => isToday(t.time));
   const users = getUsers();
   const map   = new Map();
   for (const t of txs) {
-    if (!map.has(t.number)) map.set(t.number, { number: t.number, jobs: 0, spent: 0, cost: 0 });
+    if (!map.has(t.number)) {
+      map.set(t.number, { number: t.number, jobs: 0, spent: 0, cost: 0, modes: { pdf: 0, sv: 0, sv2: 0 }, modeSpent: { pdf: 0, sv: 0, sv2: 0 } });
+    }
     const row = map.get(t.number);
     row.jobs++;
     row.spent += t.price || 0;
     row.cost  += t.cost  || 0;
+    const m = t.mode in row.modes ? t.mode : "pdf";
+    row.modes[m]++;
+    row.modeSpent[m] += t.price || 0;
   }
   return [...map.values()]
     .map(r => ({ ...r, name: users.find(u => normalizeNumber(u.number) === r.number)?.name || "" }))
     .sort((a, b) => b.jobs - a.jobs);
+}
+
+// একজন user এর balance লেনদেন (recharge / কাটা / refund)
+function getUserLedgerSummary(number) {
+  const n   = normalizeNumber(number);
+  const all = getLedger().filter(x => x.number === n);
+  const sum = (type) => all.filter(x => x.type === type).reduce((s, x) => s + (x.amount || 0), 0);
+  return { topup: sum("topup"), deduct: sum("deduct"), refund: sum("refund"), list: all.slice().reverse() };
+}
+
+// আজ সব user মিলিয়ে কত recharge / কাটা / refund
+function getTodayLedgerTotals() {
+  const t = { topup: 0, deduct: 0, refund: 0 };
+  for (const x of getLedger()) if (isToday(x.time) && x.type in t) t[x.type] += x.amount || 0;
+  return t;
 }
 
 function toBn(num) {
@@ -361,19 +411,23 @@ async function backupData() {
       saveToMongo("backups", "transactions", getTransactions()), // ✅
       saveToMongo("backups", "svcache",      getSVCache()),      // ✅ যেন redeploy এর পরও cache হারিয়ে গিয়ে আবার API call না হয়
       saveToMongo("backups", "responses",    getResponses()),    // ✅ VIP response
+      saveToMongo("backups", "txarchive",    getTxArchive()),    // ✅ পুরনো job এর যোগফল
+      saveToMongo("backups", "ledger",       getLedger()),       // ✅ recharge / refund
     ]);
   } catch (e) { console.error("Backup error:", e.message); }
 }
 
 async function restoreData() {
   try {
-    const [users, stats, settings, transactions, svcache, responses] = await Promise.all([
+    const [users, stats, settings, transactions, svcache, responses, txarchive, ledger] = await Promise.all([
       loadFromMongo("backups", "users"),
       loadFromMongo("backups", "stats"),
       loadFromMongo("backups", "settings"),
       loadFromMongo("backups", "transactions"), // ✅
       loadFromMongo("backups", "svcache"),      // ✅
       loadFromMongo("backups", "responses"),    // ✅
+      loadFromMongo("backups", "txarchive"),
+      loadFromMongo("backups", "ledger"),
     ]);
     if (users        && !fs.existsSync(USERS_FILE))        saveUsers(users);
     if (stats        && !fs.existsSync(STATS_FILE))        saveStats(stats);
@@ -381,7 +435,9 @@ async function restoreData() {
     if (transactions && !fs.existsSync(TRANSACTIONS_FILE)) saveTransactions(transactions);
     if (svcache      && !fs.existsSync(SV_CACHE_FILE))      saveSVCache(svcache);
     if (responses    && !fs.existsSync(RESPONSES_FILE))     saveResponses(responses);
-    if (users || stats || settings || transactions || svcache || responses) console.log("✅ Data restored from MongoDB");
+    if (txarchive    && !fs.existsSync(TX_ARCHIVE_FILE))    saveTxArchive(txarchive);
+    if (ledger       && !fs.existsSync(LEDGER_FILE))        saveLedger(ledger);
+    if (users || stats || settings || transactions || svcache || responses || txarchive || ledger) console.log("✅ Data restored from MongoDB");
     else console.log("ℹ️ No MongoDB data — starting fresh");
   } catch (e) { console.error("Restore error:", e.message); }
 }
@@ -1685,19 +1741,29 @@ async function convertHTMLtoPDF(html) {
 
 // ─────────────────── PROCESS: PDF → Card → Send ────────────────
 // ✅ UPDATED: mode প্যারামিটার যোগ হলো ("pdf" / "sv") — caption এ সঠিক price দেখানোর জন্য
-async function processNIDCard(from, data, version, msgId, mode = "pdf") {
+// PDF সত্যি পৌঁছেছে কিনা নিশ্চিত করতে — error গিলে ফেলে না (sendDocument গিলে ফেলত, তাই কার্ড না গেলেও টাকা কাটা থাকত)
+async function sendDocumentOrThrow(to, mediaId, filename, caption) {
+  try {
+    await axios.post(`${WA_BASE()}/messages`, {
+      messaging_product: "whatsapp", to, type: "document",
+      document: { id: mediaId, filename, caption }
+    }, { headers: WA_HEADERS() });
+  } catch (e) {
+    throw new Error("PDF পাঠানো যায়নি: " + (e.response?.data?.error?.message || e.message));
+  }
+}
+
+// opts: { cached: ক্যাশ থেকে দেওয়া হলে true (API খরচ ০), price: আসলে যত টাকা কাটা হয়েছে }
+async function processNIDCard(from, data, version, msgId, mode = "pdf", opts = {}) {
   if (msgId) markRead(msgId);
 
   const html      = buildHTML(version, data);
   const pdfBuffer = await convertHTMLtoPDF(html);
 
-  recordStat(from);
-  backupData();
-
   const safeName = (data.nameEnglish || data.nameBangla || "NID").replace(/[/\\?%*:|"<>]/g, "").trim();
   const filename  = `${data.nid || Date.now()} - ${safeName}.pdf`;
 
-  const price  = getPriceForUser(from, mode); // ✅ mode অনুযায়ী সঠিক price
+  const price  = opts.price ?? getPriceForUser(from, mode);
   const defVer = getUserDefaultVersion(from);
 
   const captionLines = [
@@ -1712,22 +1778,28 @@ async function processNIDCard(from, data, version, msgId, mode = "pdf") {
 
   const mediaId = await uploadMedia(pdfBuffer, filename, "application/pdf");
 
+  // ✅ আগে PDF — সত্যি না পৌঁছালে throw হবে, টাকা ফেরত যাবে, আর "তৈরি হয়েছে" লেখা ভুল করে যাবে না
+  await sendDocumentOrThrow(from, mediaId, filename, "");
   await sendText(from, captionLines);
-  await sendDocument(from, mediaId, filename, "");
 
-  // ✅ প্রতিটা সফল job এর জন্য আলাদা log — admin panel এর "কে কত কাজ করলো" রিপোর্ট এখান থেকে আসবে
-  recordTransaction(from, {
-    mode, version, price,
-    nid:  data.nid,
-    name: data.nameBangla || data.nameEnglish || "",
-  });
+  // ✅ হিসাব শুধু সফল ডেলিভারির পরে (আগে ডেলিভারির আগেই stat বাড়ত)
+  try { recordStat(from); } catch (e) { console.error("stat error:", e.message); }
+  try {
+    recordTransaction(from, {
+      mode, version, price,
+      nid:    data.nid,
+      name:   data.nameBangla || data.nameEnglish || "",
+      cached: !!opts.cached,
+    });
+  } catch (e) { console.error("transaction log error:", e.message); }
+  backupData();
 
   clearPending(from);
-  console.log(`✅ Card sent to ${from} — V${version} — NID: ${data.nid} — Mode: ${mode}`);
+  console.log(`✅ Card sent to ${from} — V${version} — NID: ${data.nid} — Mode: ${mode}${opts.cached ? " (cache)" : ""}`);
 }
 
-// ✅ NEW: balance কাটা + card তৈরি — fail করলে automatic refund করে দেয় (আগে এই bug ছিল: PDF fail হলে টাকা কাটা থেকেই যেত)
-async function chargeAndProcess(from, data, version, msgId, mode = "pdf") {
+// balance কাটা + card তৈরি/পাঠানো — fail করলে automatic refund (ledger এ রেকর্ডসহ)
+async function chargeAndProcess(from, data, version, msgId, mode = "pdf", opts = {}) {
   const price = getPriceForUser(from, mode);
 
   if (price > 0 && !deductBalance(from, mode)) {
@@ -1738,16 +1810,56 @@ async function chargeAndProcess(from, data, version, msgId, mode = "pdf") {
   }
 
   try {
-    await processNIDCard(from, data, version, msgId, mode);
+    await processNIDCard(from, data, version, msgId, mode, { ...opts, price });
   } catch (e) {
     console.error("processNIDCard failed:", e.message);
     if (price > 0) {
-      refundBalance(from, price); // ✅ টাকা ফেরত
+      refundBalance(from, price, `${modeLabel(mode)} — ${String(e.message).slice(0, 80)}`); // ✅ টাকা ফেরত + ledger
       await sendText(from, `❌ Error: ${e.message}\n💰 আপনার ${price} টাকা ফেরত দেওয়া হয়েছে। আবার চেষ্টা করুন।`);
     } else {
       await sendText(from, `❌ Error: ${e.message}\nআবার চেষ্টা করুন।`);
     }
   }
+}
+
+// ═══════════════ USER MESSAGE LOG (admin এর জন্য — NID/DOB মাস্ক করা, সীমিত সময়) ═══════════════
+// বন্ধ করতে: env MSG_LOG=off · সময় বদলাতে: MSG_LOG_HOURS (ডিফল্ট ৪৮ ঘণ্টা)
+const MSGLOG_FILE  = path.join(CONFIG.DATA_DIR, "msg_log.json");
+const MSGLOG_ON    = process.env.MSG_LOG !== "off";
+const MSGLOG_HOURS = Number(process.env.MSG_LOG_HOURS) || 48;
+const MSGLOG_CAP   = 2000;
+const getMsgLog    = () => loadJSON(MSGLOG_FILE, []);
+
+// NID / ফোন নম্বর / জন্ম তারিখ চেনা গেলে লুকিয়ে ফেলে — log এ পুরো নম্বর থাকে না
+function maskText(raw) {
+  let s = bnToEn(raw || "");
+  s = s.replace(/(?<!\d)\d{1,4}[\/.\-]\d{1,2}[\/.\-]\d{1,4}(?!\d)/g, "[DOB]");
+  s = s.replace(/(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s,\-]+([A-Za-z]{3,9})\.?,?[\s\-]+(\d{4})(?!\d)/g,
+    (m, d, mon) => (MONTH_NAME_MAP[mon.toLowerCase()] ? "[DOB]" : m));
+  s = s.replace(/\d{6,}/g, (m) => m.slice(0, 3) + "•".repeat(m.length - 5) + m.slice(-2));
+  return s.replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+function logInbound(msg) {
+  if (!MSGLOG_ON) return;
+  try {
+    let kind = String(msg.type || "other"), preview = `(${kind})`;
+    if (msg.type === "text") {
+      const raw = (msg.text?.body || "").trim();
+      const p   = parseSVInput(raw);
+      kind    = /^[.\/]/.test(raw) ? "command" : (p.nids.length || p.dobs.length) ? "lookup" : "text";
+      preview = maskText(raw);
+    } else if (msg.type === "document") {
+      kind = "pdf"; preview = "📄 ফাইল/PDF পাঠিয়েছে";
+    } else if (msg.type === "interactive") {
+      kind = "button"; preview = String(msg.interactive?.button_reply?.id || "(button)");
+    }
+    const cutoff = Date.now() - MSGLOG_HOURS * 3600 * 1000;
+    const fresh  = getMsgLog().filter(m => new Date(m.time).getTime() > cutoff);
+    fresh.push({ time: new Date().toISOString(), number: normalizeNumber(msg.from), kind, preview });
+    if (fresh.length > MSGLOG_CAP) fresh.splice(0, fresh.length - MSGLOG_CAP);
+    saveJSON(MSGLOG_FILE, fresh);
+  } catch (e) { console.error("msg log error:", e.message); }
 }
 
 // ═══════════════ META / WHATSAPP HEALTH + OPT-IN BROADCAST ═══════════════
@@ -2051,7 +2163,7 @@ async function runSV2(from, nid, dob, version) {
   const cached = getCachedSVData(nid, dob);
   if (cached) {
     await sendText(from, "⚠️ এই NID + জন্ম তারিখের তথ্য আগেই fetch করা আছে। টোকেন বাঁচাতে আবার API call না করে আগের তথ্য থেকেই কার্ড বানানো হচ্ছে।");
-    return chargeAndProcess(from, cached.data, version, null, "sv2");
+    return chargeAndProcess(from, cached.data, version, null, "sv2", { cached: true });
   }
 
   await sendText(from, `⏳ SV2 (VIP) দিয়ে তথ্য fetch হচ্ছে...${price > 0 ? ` (সফল হলে ${price} টাকা কাটা হবে)` : ""}`);
@@ -2112,7 +2224,7 @@ async function handleSVRequest(from, nid, dob, mode = "sv") {
   const cached = getCachedSVData(nid, dob);
   if (cached) {
     await sendText(from, "⚠️ এই NID + জন্ম তারিখের তথ্য আগেই একবার fetch করা হয়েছিল। টোকেন বাঁচাতে আবার API call না করে আগের তথ্য থেকেই কার্ড বানানো হচ্ছে।");
-    return chargeAndProcess(from, cached.data, version, null, firstMode);
+    return chargeAndProcess(from, cached.data, version, null, firstMode, { cached: true });
   }
 
   if (!s1) return runSV2(from, nid, dob, version); // শুধু SV2 চালু থাকলে
@@ -2152,6 +2264,7 @@ async function handleIncoming(msg, contact) {
   const from  = msg.from;
   const msgId = msg.id;
   touchInbound(from); // ✅ শেষ মেসেজের সময় — ২৪ ঘণ্টার window বোঝার জন্য
+  logInbound(msg);    // ✅ admin এর মেসেজ monitor (NID/DOB মাস্ক করা)
 
   if (msg.type === "text") {
     const rawText = msg.text.body.trim();
@@ -2478,9 +2591,22 @@ app.post("/webhook", async (req, res) => {
 });
 
 app.get("/",        (_, res) => res.send("✅ NID Bot is running"));
-app.get("/privacy", (_, res) => res.send(`<html><body style="font-family:sans-serif;max-width:700px;margin:40px auto;padding:20px;">
+app.get("/privacy", (_, res) => res.send(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy Policy</title></head><body style="font-family:sans-serif;max-width:700px;margin:40px auto;padding:20px;line-height:1.6;">
   <h1>Privacy Policy</h1>
-  <p>NID Service Bot processes NID PDFs temporarily and does not store personal data.</p>
+  <p>This service processes National ID information that you submit (as a PDF, or as an NID number with a date of birth) in order to produce the document you request.</p>
+  <h3>What is stored</h3>
+  <ul>
+    <li>Your WhatsApp number, name, balance and settings (account record).</li>
+    <li>A log of each completed job: time, service used, the NID number and name on the document, and the price charged.</li>
+    <li>A copy of looked-up records, kept so that the same lookup is not repeated.</li>
+    <li>A log of messages you send to the bot, with NID numbers, phone numbers and dates of birth masked, kept for ${MSGLOG_HOURS} hours.</li>
+    <li>Raw responses from the premium lookup provider, kept for 24 hours${CONFIG.GITHUB_TOKEN && CONFIG.GITHUB_REPO ? " (and copied to a private repository)" : ""}.</li>
+    <li>Records of balance changes (recharges, deductions, refunds).</li>
+  </ul>
+  <h3>Notices</h3>
+  <p>Send <b>.stop</b> to stop receiving notices and <b>.subscribe</b> to receive them again.</p>
+  <h3>Questions or removal requests</h3>
+  <p>Please contact the service operator.</p>
 </body></html>`));
 
 // ──────────────────── ADMIN PANEL ───────────────────────────────
@@ -2606,6 +2732,7 @@ function adminPage(title, body, active = "home") {
   <nav>
     <a class="${active === "home" ? "on" : ""}" href="/admin">📊 Dashboard</a>
     <a class="${active === "resp" ? "on" : ""}" href="/admin/responses">🗂 Responses</a>
+    <a class="${active === "msg" ? "on" : ""}" href="/admin/messages">💬 Messages</a>
     <a class="${active === "meta" ? "on" : ""}" href="/admin/meta">📡 Meta</a>
     <a href="/admin/logout">🚪 Logout</a>
   </nav>
@@ -2661,6 +2788,11 @@ app.get("/admin", adminAuth, (req, res) => {
   const todayRev   = today.reduce((s, r) => s + r.spent, 0);
   const todayCost  = today.reduce((s, r) => s + r.cost, 0);
   const todayProfit = todayRev - todayCost;
+  // ✅ PDF / SV1 / VIP আলাদা করে আজকের হিসাব — VIP কাজও আলাদাভাবে ধরা পড়ে
+  const modeTot = { pdf: { jobs: 0, spent: 0 }, sv: { jobs: 0, spent: 0 }, sv2: { jobs: 0, spent: 0 } };
+  for (const r of today) for (const m of ["pdf", "sv", "sv2"]) { modeTot[m].jobs += r.modes[m] || 0; modeTot[m].spent += r.modeSpent[m] || 0; }
+  const ledgerToday = getTodayLedgerTotals();
+  const msgsToday   = getMsgLog().filter(m => isToday(m.time)).length;
   const totalBal   = users.reduce((s, u) => s + (u.balance || 0), 0);
   const activeCnt  = users.filter(u => u.active !== false).length;
 
@@ -2756,7 +2888,7 @@ app.get("/admin", adminAuth, (req, res) => {
 
   const todayRows = today.map(r => `
     <div class="li">
-      <div><div class="a">${esc(r.name || "—")} <span class="muted">${esc(r.number)}</span></div><div class="b">কাজ: ${r.jobs} টা · কাটা: ${r.spent} ৳${r.cost ? ` · খরচ: ${r.cost} ৳` : ""}</div></div>
+      <div><div class="a">${esc(r.name || "—")} <span class="muted">${esc(r.number)}</span></div><div class="b">কাজ: ${r.jobs} টা (PDF ${r.modes.pdf} · SV1 ${r.modes.sv} · VIP ${r.modes.sv2}) · কাটা: ${r.spent} ৳${r.cost ? ` · খরচ: ${r.cost} ৳` : ""}</div></div>
       <a class="btn ghost sm" href="/admin/user/${esc(r.number)}">বিস্তারিত →</a>
     </div>`).join("") || `<p class="muted" style="padding:10px 0">আজকে এখনো কেউ কাজ করেনি।</p>`;
 
@@ -2765,6 +2897,10 @@ app.get("/admin", adminAuth, (req, res) => {
     ${statBox("আজকের কাজ", todayJobs, "var(--acc2)")}
     ${statBox("আজকের আয়", todayRev + " ৳", "var(--ok)")}
     ${statBox("আজকের লাভ", todayProfit + " ৳", todayProfit >= 0 ? "var(--ok)" : "var(--bad)")}
+    ${statBox("আজ VIP", `${modeTot.sv2.jobs} কাজ <span class="muted">· ${modeTot.sv2.spent} ৳</span>`, "#b9a2ff")}
+    ${statBox("আজ SV1 / PDF", `${modeTot.sv.jobs} / ${modeTot.pdf.jobs}`)}
+    ${statBox("আজকের রিচার্জ", ledgerToday.topup + " ৳", "var(--ok)")}
+    ${statBox("আজ মেসেজ", msgsToday, "var(--acc2)")}
     ${statBox("মোট User", `${users.length} <span class="muted">(${activeCnt} active)</span>`)}
     ${statBox("User দের Balance", totalBal + " ৳", "var(--warn)")}
   </div>
@@ -2850,6 +2986,8 @@ app.get("/admin/user/:number", adminAuth, (req, res) => {
   const u       = getUser(number);
   const summary = getUserTxSummary(number);
   const resps   = pruneResponses().filter(r => r.number === number).reverse();
+  const msgsU   = getMsgLog().filter(m => m.number === number).reverse().slice(0, 30);
+  const led     = getUserLedgerSummary(number);
 
   const rows = summary.list.slice(0, 200).map(t => `<tr>
     <td>${fmtTime(t.time)}</td>
@@ -2877,17 +3015,71 @@ app.get("/admin/user/:number", adminAuth, (req, res) => {
     ${statBox("আজকের কাজ", summary.todayCount, "var(--acc2)")}
     ${statBox("আজ কাটা", summary.todaySpent + " ৳", "var(--warn)")}
     ${statBox("এর থেকে লাভ", profit + " ৳", profit >= 0 ? "var(--ok)" : "var(--bad)")}
+    ${statBox("মোট রিচার্জ", led.topup + " ৳", "var(--ok)")}
+    ${statBox("Refund পেয়েছে", led.refund + " ৳")}
   </div>
 
   <h2 class="sec">🗂 গত ২৪ ঘণ্টার VIP Response <span>${resps.length} টা</span></h2>
   <div class="card">${respRows}</div>
 
-  <h2 class="sec">📜 Job History <span>সর্বশেষ ২০০টা</span></h2>
+  <h2 class="sec">💬 সাম্প্রতিক মেসেজ <span>NID/DOB মাস্ক করা · <a href="/admin/messages?u=${esc(number)}">সব দেখুন</a></span></h2>
+  <div class="card">${msgsU.map(m => `<div class="li"><div><div class="a">${kindPill(m.kind)} <span style="font-weight:500;word-break:break-word">${esc(m.preview)}</span></div><div class="b">${fmtTime(m.time)}</div></div></div>`).join("") || `<p class="muted">গত ${MSGLOG_HOURS} ঘণ্টায় কোনো মেসেজ নেই।</p>`}</div>
+
+  <h2 class="sec">💳 Balance লেনদেন <span>রিচার্জ ${led.topup} ৳ · Admin কাটা ${led.deduct} ৳ · Refund ${led.refund} ৳</span></h2>
+  <div class="card">${led.list.slice(0, 30).map(x => `<div class="li"><div><div class="a">${ledgerLabel(x.type)} ${x.amount} ৳ <span class="muted">→ balance ${x.balanceAfter} ৳</span></div><div class="b">${fmtTime(x.time)}${x.note ? " · " + esc(x.note) : ""}</div></div></div>`).join("") || `<p class="muted">এখনো কোনো লেনদেন নেই।</p>`}</div>
+
+  <h2 class="sec">📜 Job History <span>সর্বশেষ ২০০টা${summary.archived ? ` · আরও ${summary.archived}টা পুরনো (মোটের হিসাবে ধরা আছে)` : ""}</span></h2>
   <div class="card tw" style="padding:6px 10px">
     <table><thead><tr><th>সময়</th><th>API</th><th>Ver</th><th>নাম</th><th>NID</th><th>কাটা</th><th>খরচ</th></tr></thead><tbody>${rows}</tbody></table>
   </div>`;
 
   res.send(adminPage("User History", body, "home"));
+});
+
+// ── 💬 User মেসেজ monitor ──
+const kindPill = (k) => {
+  const cls = k === "lookup" ? "sv" : k === "pdf" ? "pdf" : k === "button" ? "sv2" : "info";
+  return `<span class="pill ${cls}">${esc(k)}</span>`;
+};
+const ledgerLabel = (t) => t === "topup" ? "➕ রিচার্জ" : t === "deduct" ? "➖ Admin কাটা" : t === "refund" ? "↩️ Refund" : esc(t);
+
+app.get("/admin/messages", adminAuth, (req, res) => {
+  const filter = req.query?.u ? normalizeNumber(req.query.u) : "";
+  const users  = getUsers();
+  const nameOf = (n) => users.find(u => normalizeNumber(u.number) === n)?.name || "";
+  let list = getMsgLog().slice().reverse();
+  if (filter) list = list.filter(m => m.number === filter);
+  const total = list.length;
+  list = list.slice(0, 300);
+
+  const rows = list.map(m => {
+    const nm = nameOf(m.number);
+    return `<tr>
+      <td>${fmtTime(m.time)}</td>
+      <td>${nm ? esc(nm) : `<span class="muted">অপরিচিত</span>`}<br><span class="muted">${esc(m.number)}</span></td>
+      <td>${kindPill(m.kind)}</td>
+      <td style="word-break:break-word">${esc(m.preview)}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="4" class="muted" style="text-align:center;padding:20px">গত ${MSGLOG_HOURS} ঘণ্টায় কোনো মেসেজ নেই</td></tr>`;
+
+  const body = `
+  <h2 class="sec" style="margin-top:4px">💬 User মেসেজ <span>${total} টা · সর্বশেষ ${MSGLOG_HOURS} ঘণ্টা</span></h2>
+  <p class="muted" style="margin-bottom:12px">${MSGLOG_ON
+    ? `গোপনীয়তার জন্য NID, ফোন নম্বর ও জন্ম তারিখ লুকিয়ে (••• / [DOB]) দেখানো হয়, আর ${MSGLOG_HOURS} ঘণ্টা পরে নিজে থেকে মুছে যায়।`
+    : `<b style="color:var(--warn)">Message log বন্ধ আছে</b> (MSG_LOG=off)।`}</p>
+  <form method="GET" action="/admin/messages" class="row" style="margin-bottom:12px;flex-wrap:nowrap">
+    <select name="u">
+      <option value="">সব user</option>
+      ${users.map(u => `<option value="${esc(normalizeNumber(u.number))}" ${filter === normalizeNumber(u.number) ? "selected" : ""}>${esc(u.name || "নাম নেই")} — ${esc(u.number)}</option>`).join("")}
+    </select>
+    <button class="btn">দেখুন</button>
+    <a class="btn ghost" href="/admin/messages${filter ? "?u=" + esc(filter) : ""}">🔄</a>
+  </form>
+  <div class="card tw" style="padding:6px 10px">
+    <table style="min-width:520px"><thead><tr><th>সময়</th><th>User</th><th>ধরন</th><th>মেসেজ</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+
+  res.send(adminPage("User Messages", body, "msg"));
 });
 
 // ── VIP responses (২৪ ঘণ্টা) ──
@@ -3070,7 +3262,9 @@ app.post("/admin/add", adminAuth, (req, res) => {
     if (svPrice  !== undefined && svPrice  !== "") newUser.svPrice  = parseFloat(svPrice);
     if (sv2Price !== undefined && sv2Price !== "") newUser.sv2Price = parseFloat(sv2Price);
     users.push(newUser);
-    saveUsers(users); backupData();
+    saveUsers(users);
+    if (newUser.balance > 0) recordLedger(n, "topup", newUser.balance, newUser.balance, "শুরুর balance");
+    backupData();
   }
   backTo(res, n);
 });
@@ -3082,7 +3276,9 @@ app.post("/admin/recharge", adminAuth, (req, res) => {
   const amt = parseFloat(amount) || 0;
   if (i !== -1 && amt > 0) {
     users[i].balance = (users[i].balance || 0) + (type === "remove" ? -amt : amt);
-    saveUsers(users); backupData();
+    saveUsers(users);
+    recordLedger(number, type === "remove" ? "deduct" : "topup", amt, users[i].balance, "admin"); // ✅ হিসাবের রেকর্ড
+    backupData();
   }
   backTo(res, number);
 });
