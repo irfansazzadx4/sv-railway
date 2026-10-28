@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ লাল মিয়া",
+      "nameEn": "MD. LAL MIA",
+      "gender": "male",
+      "father": "মোঃ সিরাজ আলী",
+      "mother": "বেদেনা খাতুন",
+      "nationalId": "4166989048",
+      "pin": "19836119447097026",
+      "oldNid": "6119447097026",
+      "voter_no": "",
+      "voter_area_code": "",
+      "sl_no": "",
+      "voterArea": "ত্রিশাল উপজেলা আওতাধীন",
+      "occupation": "",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1983-01-01",
+      "birthDay": "শনিবার",
+      "age": "৪৩ বছর ৯ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/84bf3ffabb5dab1499b705774c1df7ca.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1461,
+    "today_success": 1100,
+    "today_cost": 16500,
+    "total_success": 3295,
+    "total_bill": 49425,
+    "speed": "2.019s"
+  }
+}
