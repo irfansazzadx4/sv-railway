@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোহাম্মদ শরিফ",
+      "nameEn": "MOHAMMAD SHARIF",
+      "gender": "male",
+      "father": "মৃত আব্দুর রহিম",
+      "mother": "পিয়ারা বেগম",
+      "nationalId": "6032356963",
+      "pin": "19911918154000617",
+      "oldNid": "1918154000617",
+      "voter_no": "193867802789",
+      "voter_area_code": "193867",
+      "sl_no": "1250",
+      "voterArea": "দিলালপুর (193867)",
+      "occupation": "প্রবাসী",
+      "bloodGroup": "",
+      "birthPlace": "কুমিল্লা",
+      "dateOfBirth": "1991-05-18",
+      "birthDay": "শনিবার",
+      "age": "৩৫ বছর ৫ মাস ১০ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ জলিল ব্যাপারীর বাড়ী, গ্রাম/রাস্তাঃ দিলালপুর, মৌজা/মহল্লাঃ দিলালপুর, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ মুরাদনগর, থানাঃ মুরাদনগর, ডাকঘরঃ মুরাদনগর - ৩৫৪০, উপজেলাঃ মুরাদনগর, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ জলিল ব্যাপারীর বাড়ী, গ্রাম/রাস্তাঃ দিলালপুর, মৌজা/মহল্লাঃ দিলালপুর, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ মুরাদনগর, থানাঃ মুরাদনগর, ডাকঘরঃ মুরাদনগর - ৩৫৪০, উপজেলাঃ মুরাদনগর, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "মুরাদনগর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "মুরাদনগর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/ae4b4b99a4b0f0f216c0cc2bb7a98421.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 493,
+    "today_success": 395,
+    "today_cost": 5925,
+    "total_success": 2590,
+    "total_bill": 38850,
+    "speed": "3.288s"
+  }
+}
