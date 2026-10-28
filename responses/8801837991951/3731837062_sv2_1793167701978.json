@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "আনোয়ার হোসেন",
+      "nameEn": "ANOWAR HOSSAIN",
+      "gender": "male",
+      "father": "আবুল হোসেন",
+      "mother": "খালেদা মনোয়ারা",
+      "nationalId": "3731837062",
+      "pin": "19742690243838451",
+      "oldNid": "2690243838451",
+      "voter_no": "261278838451",
+      "voter_area_code": "261278",
+      "sl_no": "1513",
+      "voterArea": "পিসি কালচার হাউজিং সোসাইটি ব্লক-খ(রোড নং-১-৫) (261278)",
+      "occupation": "ব্যবসা",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1974-06-01",
+      "birthDay": "শনিবার",
+      "age": "৫২ বছর ৪ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ১৩, গ্রাম/রাস্তাঃ পিসি কালচার হাউজিং সোসাইটি ব্লক-খ(রোড নং-১-৫), মৌজা/মহল্লাঃ ডি, ১/১, দক্ষিণ পিসি কালচার হাউজিং সোসাইটি, ওয়ার্ড নংঃ ৩০, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ আদাবর, ডাকঘরঃ মোহাম্মদপুর - ১২০৭, উপজেলাঃ আদাবর, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ১৩, গ্রাম/রাস্তাঃ পিসি কালচার হাউজিং সোসাইটি ব্লক-খ(রোড নং-১-৫), মৌজা/মহল্লাঃ ডি, ১/১, দক্ষিণ পিসি কালচার হাউজিং সোসাইটি, ওয়ার্ড নংঃ ৩০, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ আদাবর, ডাকঘরঃ মোহাম্মদপুর - ১২০৭, উপজেলাঃ আদাবর, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "আদাবর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "আদাবর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/5bd16e5a989fddd5a7a55388cec8ffcd.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 573,
+    "today_success": 466,
+    "today_cost": 6990,
+    "total_success": 2661,
+    "total_bill": 39915,
+    "speed": "2.335s"
+  }
+}
