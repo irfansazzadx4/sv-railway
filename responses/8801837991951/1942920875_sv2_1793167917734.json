@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "আব্দুস ছালাম",
+      "nameEn": "ABDUS SALAM",
+      "gender": "male",
+      "father": "মৃত আব্দুল মালেক",
+      "mother": "মোসাঃ অমরতা বেগম",
+      "nationalId": "1942920875",
+      "pin": "19772613813226014",
+      "oldNid": "2613813226014",
+      "voter_no": "260626226014",
+      "voter_area_code": "260626",
+      "sl_no": "43",
+      "voterArea": "বাঘাপুর পশ্চিম (260626)",
+      "occupation": "ব্যবসা",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1978-03-15",
+      "birthDay": "বুধবার",
+      "age": "৪৮ বছর ৭ মাস ১৩ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ১২৭, গ্রাম/রাস্তাঃ বাঘাপুর পশ্চিম, মৌজা/মহল্লাঃ বাঘাপুর, চর গলগলিয়া, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ বাস্তা, থানাঃ কেরানীগঞ্জ, ডাকঘরঃ আবদুল্লাপুর - ১৩১১, উপজেলাঃ কেরানীগঞ্জ, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ১২৭, গ্রাম/রাস্তাঃ বাঘাপুর পশ্চিম, মৌজা/মহল্লাঃ বাঘাপুর, চর গলগলিয়া, ওয়ার্ড নংঃ ৯, ইউনিয়ন/পৌরসভাঃ বাস্তা, থানাঃ কেরানীগঞ্জ, ডাকঘরঃ আবদুল্লাপুর - ১৩১১, উপজেলাঃ কেরানীগঞ্জ, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "কেরানীগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "কেরানীগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/aca4db346c3184c8e9e645f3d6d9f806.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 604,
+    "today_success": 493,
+    "today_cost": 7395,
+    "total_success": 2688,
+    "total_bill": 40320,
+    "speed": "2.29s"
+  }
+}
