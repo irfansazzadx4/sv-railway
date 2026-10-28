@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোছাঃ নূরজাহান বেগম",
+      "nameEn": "Mst.Nurjahan Begum",
+      "gender": "female",
+      "father": "আব্দুল গনি",
+      "mother": "মোছাঃ রেজিয়া খাতুন",
+      "nationalId": "4604948192",
+      "pin": "19832693717211997",
+      "oldNid": "2693717211997",
+      "voter_no": "612814089766",
+      "voter_area_code": "612814",
+      "sl_no": "164",
+      "voterArea": "দিস্তা (612814)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1983-01-01",
+      "birthDay": "শনিবার",
+      "age": "৪৩ বছর ৯ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ২৮০, গ্রাম/রাস্তাঃ দিস্তা, মৌজা/মহল্লাঃ দিস্তা, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ বানিহালা, থানাঃ তারাকান্দা, ডাকঘরঃ মাঝিয়ালী - ২২৫২, উপজেলাঃ তারাকান্দা, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ২৮০, গ্রাম/রাস্তাঃ দিস্তা, মৌজা/মহল্লাঃ দিস্তা, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ বানিহালা, থানাঃ তারাকান্দা, ডাকঘরঃ মাঝিয়ালী - ২২৫২, উপজেলাঃ তারাকান্দা, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "তারাকান্দা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "তারাকান্দা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/563a23ef908a57b3d82e97c696a8fa0e.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 182,
+    "today_success": 138,
+    "today_cost": 2070,
+    "total_success": 2333,
+    "total_bill": 34995,
+    "speed": "3.792s"
+  }
+}
