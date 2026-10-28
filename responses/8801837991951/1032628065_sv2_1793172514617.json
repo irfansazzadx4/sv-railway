@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মুক্তা আক্তার মৌসুমী",
+      "nameEn": "MUKTA AKTHER MOUSHUMI",
+      "gender": "female",
+      "father": "মোঃ মোবারক আলী",
+      "mother": "নিরফুলী বেগম",
+      "nationalId": "1032628065",
+      "pin": "20018918881000036",
+      "oldNid": "8918881000036",
+      "voter_no": "890150000327",
+      "voter_area_code": "890150",
+      "sl_no": "521",
+      "voterArea": "তারাগড় গাং পাড় (890150)",
+      "occupation": "ছাত্র/ছাত্রী",
+      "bloodGroup": "",
+      "birthPlace": "শেরপুর",
+      "dateOfBirth": "2001-10-05",
+      "birthDay": "শুক্রবার",
+      "age": "২৫ বছর ০ মাস ২৩ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ তারাগড় গাং পাড়, মৌজা/মহল্লাঃ তারাগড়, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ শেরপুর পৌরসভা, থানাঃ শেরপুর সদর, ডাকঘরঃ চৈতনখিলা - ২১০০, উপজেলাঃ শেরপুর সদর, জেলাঃ শেরপুর, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ তারাগড় গাং পাড়, মৌজা/মহল্লাঃ তারাগড়, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ শেরপুর পৌরসভা, থানাঃ শেরপুর সদর, ডাকঘরঃ চৈতনখিলা - ২১০০, উপজেলাঃ শেরপুর সদর, জেলাঃ শেরপুর, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "শেরপুর",
+        "upozila": "শেরপুর সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "শেরপুর",
+        "upozila": "শেরপুর সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/f54aca6e0cdb6e54d54026c8c9e02469.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1050,
+    "today_success": 784,
+    "today_cost": 11760,
+    "total_success": 2979,
+    "total_bill": 44685,
+    "speed": "4.456s"
+  }
+}
