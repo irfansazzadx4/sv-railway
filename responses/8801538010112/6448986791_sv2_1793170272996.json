@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "বেবি বেগম",
+      "nameEn": "Baby Begum",
+      "gender": "",
+      "father": "মোঃ আবদুল মতিন",
+      "mother": "ফিরোজা বেগম",
+      "nationalId": "6448986791",
+      "pin": "19821314513716096",
+      "oldNid": "1314513716096",
+      "voter_no": "131475716096",
+      "voter_area_code": "131475",
+      "sl_no": 507,
+      "voterArea": "কৃষ্ণপুর (131475)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "চাঁদপুর",
+      "dateOfBirth": "1982-07-04",
+      "birthDay": "রবিবার",
+      "age": "৪৪ বছর ৩ মাস ২৪ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ আবু তাহের বাড়ী, গ্রাম/রাস্তাঃ কৃষ্ণপুর, ৭৮ নং কৃষ্ণপুর, মৌজা/মহল্লাঃ কৃষ্ণপুর, ওয়ার্ড নংঃ ৭, ইউনিয়ন/পৌরসভাঃ বালিথুবা (পূর্ব), থানাঃ ফরিদগঞ্জ, উপজেলাঃ ফরিদগঞ্জ, জেলাঃ চাঁদপুর, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ আবু তাহের বাড়ী, গ্রাম/রাস্তাঃ কৃষ্ণপুর, ৭৮ নং কৃষ্ণপুর, মৌজা/মহল্লাঃ কৃষ্ণপুর, ওয়ার্ড নংঃ ৭, ইউনিয়ন/পৌরসভাঃ বালিথুবা (পূর্ব), থানাঃ ফরিদগঞ্জ, উপজেলাঃ ফরিদগঞ্জ, জেলাঃ চাঁদপুর, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চাঁদপুর",
+        "upozila": "ফরিদগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চাঁদপুর",
+        "upozila": "ফরিদগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/778351ac18006b4526f8d196d6f70be9.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 824,
+    "today_success": 630,
+    "today_cost": 9450,
+    "total_success": 2825,
+    "total_bill": 42375,
+    "speed": "7.286s"
+  }
+}
