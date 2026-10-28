@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "নাসরীন সুলতানা",
+      "nameEn": "Nasreen Sultana",
+      "gender": "female",
+      "father": "হাবিবুর রহমান",
+      "mother": "ফাতেমা রহমান",
+      "nationalId": "1482839964",
+      "pin": "19672693626721747",
+      "oldNid": "2693626721747",
+      "voter_no": "261152721747",
+      "voter_area_code": "261152",
+      "sl_no": "337",
+      "voterArea": "মেরাদিয়া পূর্ব (261152)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1967-06-16",
+      "birthDay": "শুক্রবার",
+      "age": "৫৯ বছর ৪ মাস ১২ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ৭৭, গ্রাম/রাস্তাঃ মেরাদিয়া পূর্ব, মৌজা/মহল্লাঃ মেরাদিয়া পূর্ব, ওয়ার্ড নংঃ ০৩, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ খিলগাঁও, ডাকঘরঃ খিলগাঁও টি এস ও - ১২১৯, উপজেলাঃ খিলগাঁও, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ৭৭, গ্রাম/রাস্তাঃ মেরাদিয়া পূর্ব, মৌজা/মহল্লাঃ মেরাদিয়া পূর্ব, ওয়ার্ড নংঃ ০৩, ইউনিয়ন/পৌরসভাঃ ঢাকা দক্ষিণ সিটি কর্পোরেশন, থানাঃ খিলগাঁও, ডাকঘরঃ খিলগাঁও টি এস ও - ১২১৯, উপজেলাঃ খিলগাঁও, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "খিলগাঁও",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "খিলগাঁও",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/e13db46033cda9a4f976489339899bf1.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 472,
+    "today_success": 376,
+    "today_cost": 5640,
+    "total_success": 2571,
+    "total_bill": 38565,
+    "speed": "5.504s"
+  }
+}
