@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "উমিলা খাতুন",
+      "nameEn": "UMILA KHATUN",
+      "gender": "",
+      "father": "আক্কাছ আলী",
+      "mother": "মরিয়ম",
+      "nationalId": "9116781197",
+      "pin": "19776119447088534",
+      "oldNid": "6119447088534",
+      "voter_no": "",
+      "voter_area_code": "",
+      "sl_no": "",
+      "voterArea": "ত্রিশাল উপজেলা আওতাধীন",
+      "occupation": "",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1977-04-15",
+      "birthDay": "শুক্রবার",
+      "age": "৪৯ বছর ৬ মাস ১৩ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/d108ba8f3554658c3e8ff229ca911539.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1258,
+    "today_success": 938,
+    "today_cost": 14070,
+    "total_success": 3133,
+    "total_bill": 46995,
+    "speed": "1.813s"
+  }
+}
