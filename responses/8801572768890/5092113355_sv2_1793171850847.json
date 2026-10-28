@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "নুর উদ্দিন",
+      "nameEn": "NUR UDDIN",
+      "gender": "male",
+      "father": "নুর আলম",
+      "mother": "সেতুমা খাতুন",
+      "nationalId": "5092113355",
+      "pin": "19831592039000402",
+      "oldNid": "1592039000402",
+      "voter_no": "150988000760",
+      "voter_area_code": "150988",
+      "sl_no": "3072",
+      "voterArea": "কোরবান আলী সওদাগর পাড়া (150988)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "চট্টগ্রাম",
+      "dateOfBirth": "1983-01-01",
+      "birthDay": "শনিবার",
+      "age": "৪৩ বছর ৯ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ইমাম মিস্ত্রি বাড়ি, গ্রাম/রাস্তাঃ কোরবান আলী সওদাগর পাড়া, মৌজা/মহল্লাঃ ২নং মাইলের মাথা, দক্ষিণ হালিশহর (পার্ট), ওয়ার্ড নংঃ ৩৯, ইউনিয়ন/পৌরসভাঃ চট্টগ্রাম সিটি কর্পোরেশন, থানাঃ চট্টগ্রাম পোর্ট, ডাকঘরঃ বন্দর - ৪১০০, উপজেলাঃ চট্টগ্রাম পোর্ট, জেলাঃ চট্টগ্রাম, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ইমাম মিস্ত্রি বাড়ি, গ্রাম/রাস্তাঃ কোরবান আলী সওদাগর পাড়া, মৌজা/মহল্লাঃ ২নং মাইলের মাথা, দক্ষিণ হালিশহর (পার্ট), ওয়ার্ড নংঃ ৩৯, ইউনিয়ন/পৌরসভাঃ চট্টগ্রাম সিটি কর্পোরেশন, থানাঃ চট্টগ্রাম পোর্ট, ডাকঘরঃ বন্দর - ৪১০০, উপজেলাঃ চট্টগ্রাম পোর্ট, জেলাঃ চট্টগ্রাম, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চট্টগ্রাম",
+        "upozila": "চট্টগ্রাম পোর্ট",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চট্টগ্রাম",
+        "upozila": "চট্টগ্রাম পোর্ট",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/5f592209287b71ae814d1a19d8ea6997.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 993,
+    "today_success": 747,
+    "today_cost": 11205,
+    "total_success": 2942,
+    "total_bill": 44130,
+    "speed": "1.543s"
+  }
+}
