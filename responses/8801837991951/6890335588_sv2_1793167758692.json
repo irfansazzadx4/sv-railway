@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "রহমত উল্লাহ",
+      "nameEn": "Rahmat Ullah",
+      "gender": "male",
+      "father": "মনির উদ্দিন",
+      "mother": "রাবেয়া বেগম",
+      "nationalId": "6890335588",
+      "pin": "19867226301473683",
+      "oldNid": "7226301473683",
+      "voter_no": "721551000194",
+      "voter_area_code": "721551",
+      "sl_no": "582",
+      "voterArea": "পানুর (721551)",
+      "occupation": "কৃষক",
+      "bloodGroup": "",
+      "birthPlace": "নেত্রকোনা",
+      "dateOfBirth": "1986-02-15",
+      "birthDay": "শনিবার",
+      "age": "৪০ বছর ৮ মাস ১৩ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ পানুর, গ্রাম/রাস্তাঃ পানুর, মৌজা/মহল্লাঃ পানুর, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ মোহনগঞ্জ পৌরসভা, থানাঃ মোহনগঞ্জ, ডাকঘরঃ মোহনগঞ্জ - ২৪৪৬, উপজেলাঃ মোহনগঞ্জ, জেলাঃ নেত্রকোনা, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ পানুর, গ্রাম/রাস্তাঃ পানুর, মৌজা/মহল্লাঃ পানুর, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ মোহনগঞ্জ পৌরসভা, থানাঃ মোহনগঞ্জ, ডাকঘরঃ মোহনগঞ্জ - ২৪৪৬, উপজেলাঃ মোহনগঞ্জ, জেলাঃ নেত্রকোনা, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "নেত্রকোনা",
+        "upozila": "মোহনগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "নেত্রকোনা",
+        "upozila": "মোহনগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/ffc9fcbfdb2e966b74e6e8697e297bdb.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 584,
+    "today_success": 476,
+    "today_cost": 7140,
+    "total_success": 2671,
+    "total_bill": 40065,
+    "speed": "2.33s"
+  }
+}
