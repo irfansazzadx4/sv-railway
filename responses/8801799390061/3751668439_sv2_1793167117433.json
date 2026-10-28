@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "আফসানা পারভীন সূচী",
+      "nameEn": "AFSANA PARVIN SUCHI",
+      "gender": "other",
+      "father": "সাজেদুল করিম সোহেল",
+      "mother": "সাকেরা আক্তার",
+      "nationalId": "3751668439",
+      "pin": "19946126503000051",
+      "oldNid": "6126503000051",
+      "voter_no": "",
+      "voter_area_code": "",
+      "sl_no": "",
+      "voterArea": "মুক্তাগাছা উপজেলা আওতাধীন",
+      "occupation": "",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1994-03-15",
+      "birthDay": "মঙ্গলবার",
+      "age": "৩২ বছর ৭ মাস ১৩ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ মুক্তাগাছা পৌরসভা, থানাঃ মুক্তাগাছা, ডাকঘরঃ, উপজেলাঃ মুক্তাগাছা, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ মুক্তাগাছা পৌরসভা, থানাঃ মুক্তাগাছা, ডাকঘরঃ, উপজেলাঃ মুক্তাগাছা, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "মুক্তাগাছা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "মুক্তাগাছা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/e802b42fb35ac2dfb7c7f82f45ad8aa8.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 521,
+    "today_success": 417,
+    "today_cost": 6255,
+    "total_success": 2612,
+    "total_bill": 39180,
+    "speed": "4.277s"
+  }
+}
