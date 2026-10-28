@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ লাল মিয়া",
+      "nameEn": "MD. LAL MIA",
+      "gender": "male",
+      "father": "বাহার উদ্দিন",
+      "mother": "আমেনা খাতুন",
+      "nationalId": "2397355849",
+      "pin": "19626113113521577",
+      "oldNid": "6113113521577",
+      "voter_no": "612212521577",
+      "voter_area_code": "612212",
+      "sl_no": "183",
+      "voterArea": "পস্তারী (612212)",
+      "occupation": "কৃষক",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1962-05-21",
+      "birthDay": "সোমবার",
+      "age": "৬৪ বছর ৫ মাস ৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ পস্তারী, মৌজা/মহল্লাঃ পস্তারী, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ ঈশ্বরগঞ্জ পৌরসভা, থানাঃ ঈশ্বরগঞ্জ, ডাকঘরঃ নশতীবাজার - ২২৮০, উপজেলাঃ ঈশ্বরগঞ্জ, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ পস্তারী, মৌজা/মহল্লাঃ পস্তারী, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ ঈশ্বরগঞ্জ পৌরসভা, থানাঃ ঈশ্বরগঞ্জ, ডাকঘরঃ নশতীবাজার - ২২৮০, উপজেলাঃ ঈশ্বরগঞ্জ, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ঈশ্বরগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ঈশ্বরগঞ্জ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/a1782f4ca749fdab01ea0a93ac022b7b.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1262,
+    "today_success": 941,
+    "today_cost": 14115,
+    "total_success": 3136,
+    "total_bill": 47040,
+    "speed": "2.646s"
+  }
+}
