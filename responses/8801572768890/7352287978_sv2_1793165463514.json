@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ জোবায়ের",
+      "nameEn": "MD. JOBAER",
+      "gender": "male",
+      "father": "‌মোঃ নাছির আহম্মদ",
+      "mother": "জান্নাতুল ফেরদৌস",
+      "nationalId": "7352287978",
+      "pin": "19970912928000260",
+      "oldNid": "0912928000260",
+      "voter_no": "090237000593",
+      "voter_area_code": "090237",
+      "sl_no": "1081",
+      "voterArea": "পূর্ব চর পাতা (৪ নং ওয়ার্ড অংশ) (090237)",
+      "occupation": "শ্রমিক",
+      "bloodGroup": "",
+      "birthPlace": "ভোলা",
+      "dateOfBirth": "1997-12-03",
+      "birthDay": "বুধবার",
+      "age": "২৮ বছর ১০ মাস ২৫ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ মাঝি বাড়ী, গ্রাম/রাস্তাঃ পূর্ব চর পাতা (৪ নং ওয়ার্ড অংশ), মৌজা/মহল্লাঃ চর পাতা, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ দৌলতখান পৌরসভা, থানাঃ দৌলত খান, ডাকঘরঃ চরপাতা হাইস্কুল - ৮৩০০, উপজেলাঃ দৌলত খান, জেলাঃ ভোলা, বিভাগঃ বরিশাল",
+      "permanentAddress": "বাসা/হোল্ডিংঃ মাঝি বাড়ী, গ্রাম/রাস্তাঃ পূর্ব চর পাতা (৪ নং ওয়ার্ড অংশ), মৌজা/মহল্লাঃ চর পাতা, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ দৌলতখান পৌরসভা, থানাঃ দৌলত খান, ডাকঘরঃ চরপাতা হাইস্কুল - ৮৩০০, উপজেলাঃ দৌলত খান, জেলাঃ ভোলা, বিভাগঃ বরিশাল",
+      "permanentAddr": {
+        "division": "বরিশাল",
+        "district": "ভোলা",
+        "upozila": "দৌলত খান",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "বরিশাল",
+        "district": "ভোলা",
+        "upozila": "দৌলত খান",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/6e733a8f71a9e9ed8ecd20eae914ffd6.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 370,
+    "today_success": 286,
+    "today_cost": 4290,
+    "total_success": 2481,
+    "total_bill": 37215,
+    "speed": "2.167s"
+  }
+}
