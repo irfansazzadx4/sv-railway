@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "ডালিম",
+      "nameEn": "DALIM",
+      "gender": "male",
+      "father": "মৃত আবদুল রহিম",
+      "mother": "পিয়ারা খাতুন",
+      "nationalId": "7825523454",
+      "pin": "19841918154000184",
+      "oldNid": "1918154000184",
+      "voter_no": "193867000874",
+      "voter_area_code": "193867",
+      "sl_no": "1093",
+      "voterArea": "দিলালপুর (193867)",
+      "occupation": "শ্রমিক",
+      "bloodGroup": "",
+      "birthPlace": "কুমিল্লা",
+      "dateOfBirth": "1984-01-01",
+      "birthDay": "রবিবার",
+      "age": "৪২ বছর ৯ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ জলিল ব্যপারি বাড়ী, গ্রাম/রাস্তাঃ দিলালপুর, মৌজা/মহল্লাঃ দিলালপুর, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ মুরাদনগর, থানাঃ মুরাদনগর, ডাকঘরঃ মুরাদনগর - ৩৫৪০, উপজেলাঃ মুরাদনগর, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ জলিল ব্যপারি বাড়ী, গ্রাম/রাস্তাঃ দিলালপুর, মৌজা/মহল্লাঃ দিলালপুর, ওয়ার্ড নংঃ ৩, ইউনিয়ন/পৌরসভাঃ মুরাদনগর, থানাঃ মুরাদনগর, ডাকঘরঃ মুরাদনগর - ৩৫৪০, উপজেলাঃ মুরাদনগর, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "মুরাদনগর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "মুরাদনগর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/6bb316ae43092556ccfb544497cfab4c.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 476,
+    "today_success": 379,
+    "today_cost": 5685,
+    "total_success": 2574,
+    "total_bill": 38610,
+    "speed": "2.948s"
+  }
+}
