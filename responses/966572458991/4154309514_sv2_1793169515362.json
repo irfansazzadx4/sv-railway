@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোছাঃ শিরিনা বেগম ঝিনুক",
+      "nameEn": "Mst Shirina Begum Jinuk",
+      "gender": "female",
+      "father": "মোঃ জমশেদ আলী সুমুর",
+      "mother": "মোছাঃ ফিরোজা বেগম",
+      "nationalId": "4154309514",
+      "pin": "19844910613422596",
+      "oldNid": "4910613422596",
+      "voter_no": "490076422596",
+      "voter_area_code": "490076",
+      "sl_no": "470",
+      "voterArea": "আন্দারীঝাড় (490076)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "কুড়িগ্রাম",
+      "dateOfBirth": "1984-08-24",
+      "birthDay": "শুক্রবার",
+      "age": "৪২ বছর ২ মাস ৪ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ বামনের কুটি, গ্রাম/রাস্তাঃ আন্দারীঝাড়, মৌজা/মহল্লাঃ ইউনিয়নঃ আন্দারীঝাড়, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ কুড়িগ্রাম পৌরসভা, থানাঃ ভুরুংগামারী, ডাকঘরঃ আন্দারীঝাড় - ৫৬৭০, উপজেলাঃ ভুরুংগামারী, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddress": "বাসা/হোল্ডিংঃ বামনের কুটি, গ্রাম/রাস্তাঃ আন্দারীঝাড়, মৌজা/মহল্লাঃ ইউনিয়নঃ আন্দারীঝাড়, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ কুড়িগ্রাম পৌরসভা, থানাঃ ভুরুংগামারী, ডাকঘরঃ আন্দারীঝাড় - ৫৬৭০, উপজেলাঃ ভুরুংগামারী, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "ভুরুংগামারী",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "ভুরুংগামারী",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/343ff5fe37d21613ea3ad63111816545.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 744,
+    "today_success": 582,
+    "today_cost": 8730,
+    "total_success": 2777,
+    "total_bill": 41655,
+    "speed": "2.104s"
+  }
+}
