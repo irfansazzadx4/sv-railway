@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "শেখ আহাম্মদ",
+      "nameEn": "Shak Ahamed",
+      "gender": "male",
+      "father": "শেখ আজিজ",
+      "mother": "মোছাঃ ছাইরা খাতুন",
+      "nationalId": "5055837842",
+      "pin": "19475017956462988",
+      "oldNid": "5017956462988",
+      "voter_no": "500716000636",
+      "voter_area_code": "500716",
+      "sl_no": "149",
+      "voterArea": "কাঞ্চনপুর (500716)",
+      "occupation": "দিনমজুর",
+      "bloodGroup": "",
+      "birthPlace": "কুস্টিয়া",
+      "dateOfBirth": "1947-12-01",
+      "birthDay": "সোমবার",
+      "age": "৭৮ বছর ১০ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ কাঞ্চনপুর, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ কাঞ্চন পৌরসভা, থানাঃ কুস্টিয়া সদর, ডাকঘরঃ কমলাপুর - ৭০০০, উপজেলাঃ কুস্টিয়া সদর, জেলাঃ কুস্টিয়া, বিভাগঃ খুলনা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ কাঞ্চনপুর, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ কাঞ্চন পৌরসভা, থানাঃ কুস্টিয়া সদর, ডাকঘরঃ কমলাপুর - ৭০০০, উপজেলাঃ কুস্টিয়া সদর, জেলাঃ কুস্টিয়া, বিভাগঃ খুলনা",
+      "permanentAddr": {
+        "division": "খুলনা",
+        "district": "কুস্টিয়া",
+        "upozila": "কুস্টিয়া সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "খুলনা",
+        "district": "কুস্টিয়া",
+        "upozila": "কুস্টিয়া সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/3639640f5c9f6c6681d61ae907f03914.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1071,
+    "today_success": 792,
+    "today_cost": 11880,
+    "total_success": 2987,
+    "total_bill": 44805,
+    "speed": "11.318s"
+  }
+}
