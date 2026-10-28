@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মমিন রুবেল",
+      "nameEn": "MOMIN RUBEL",
+      "gender": "",
+      "father": "হাজী আব্দুল বারী",
+      "mother": "মোছাঃ আয়েশা খাতুন",
+      "nationalId": "2831365610",
+      "pin": "19806125212194857",
+      "oldNid": "6125212194857",
+      "voter_no": "",
+      "voter_area_code": "",
+      "sl_no": "",
+      "voterArea": "ময়মনসিংহ সদর উপজেলা আওতাধীন",
+      "occupation": "",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1980-01-01",
+      "birthDay": "মঙ্গলবার",
+      "age": "৪৬ বছর ৯ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ, থানাঃ ময়মনসিংহ সদর, ডাকঘরঃ, উপজেলাঃ ময়মনসিংহ সদর, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ, থানাঃ ময়মনসিংহ সদর, ডাকঘরঃ, উপজেলাঃ ময়মনসিংহ সদর, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ময়মনসিংহ সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ময়মনসিংহ সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/6cf86236d66afdf1bf39873a836e0eeb.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 521,
+    "today_success": 417,
+    "today_cost": 6255,
+    "total_success": 2612,
+    "total_bill": 39180,
+    "speed": "5.518s"
+  }
+}
