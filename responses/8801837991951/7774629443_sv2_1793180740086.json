@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ মাসুদ আলম",
+      "nameEn": "Md Masud Alam",
+      "gender": "male",
+      "father": "আঃ রব",
+      "mother": "সাফিয়া খাতুন",
+      "nationalId": "7774629443",
+      "pin": "19771315863466077",
+      "oldNid": "1315863466077",
+      "voter_no": "130985466077",
+      "voter_area_code": "130985",
+      "sl_no": "32",
+      "voterArea": "কহলথুড়ি (130985)",
+      "occupation": "ব্যবসা",
+      "bloodGroup": "",
+      "birthPlace": "চাঁদপুর",
+      "dateOfBirth": "1977-05-01",
+      "birthDay": "রবিবার",
+      "age": "৪৯ বছর ৫ মাস ২৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ কহলথুরী, গ্রাম/রাস্তাঃ কহলথুড়ি, মৌজা/মহল্লাঃ ২২৫নং কহলথুরী, ওয়ার্ড নংঃ ৬, ইউনিয়ন/পৌরসভাঃ কচুয়া পৌরসভা, থানাঃ কচুয়া, ডাকঘরঃ সাহেদাপুর - ৩৬৩০, উপজেলাঃ কচুয়া, জেলাঃ চাঁদপুর, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ কহলথুরী, গ্রাম/রাস্তাঃ কহলথুড়ি, মৌজা/মহল্লাঃ ২২৫নং কহলথুরী, ওয়ার্ড নংঃ ৬, ইউনিয়ন/পৌরসভাঃ কচুয়া পৌরসভা, থানাঃ কচুয়া, ডাকঘরঃ সাহেদাপুর - ৩৬৩০, উপজেলাঃ কচুয়া, জেলাঃ চাঁদপুর, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চাঁদপুর",
+        "upozila": "কচুয়া",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চাঁদপুর",
+        "upozila": "কচুয়া",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/4f84794d72e0cdf9a97ffe11ef4ee3e9.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1473,
+    "today_success": 1110,
+    "today_cost": 16650,
+    "total_success": 3305,
+    "total_bill": 49575,
+    "speed": "2.151s"
+  }
+}
