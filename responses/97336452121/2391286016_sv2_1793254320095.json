@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ জাহিদ মন্ডল",
+      "nameEn": "MD. JAHID MONDOL",
+      "gender": "male",
+      "father": "মোঃ ফটিক মন্ডল",
+      "mother": "মোছাঃ জমিলা বেগম",
+      "nationalId": "2391286016",
+      "pin": "19949312877000326",
+      "oldNid": "9312877000326",
+      "voter_no": "931643000271",
+      "voter_area_code": "931643",
+      "sl_no": "710",
+      "voterArea": "ছয়ানী বকশিয়া (931643)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "টাঙ্গাইল",
+      "dateOfBirth": "1994-11-20",
+      "birthDay": "রবিবার",
+      "age": "৩১ বছর ১১ মাস ৯ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ পশ্চিম পাড়া, গ্রাম/রাস্তাঃ ছয়ানী বকশিয়া, মৌজা/মহল্লাঃ ছয়ানী বকশিয়া, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ ঘাটাইল পৌরসভা, থানাঃ ঘাটাইল, ডাকঘরঃ আথাইল শিমুল - ১৯৮০, উপজেলাঃ ঘাটাইল, জেলাঃ টাঙ্গাইল, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ পশ্চিম পাড়া, গ্রাম/রাস্তাঃ ছয়ানী বকশিয়া, মৌজা/মহল্লাঃ ছয়ানী বকশিয়া, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ ঘাটাইল পৌরসভা, থানাঃ ঘাটাইল, ডাকঘরঃ আথাইল শিমুল - ১৯৮০, উপজেলাঃ ঘাটাইল, জেলাঃ টাঙ্গাইল, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "টাঙ্গাইল",
+        "upozila": "ঘাটাইল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "টাঙ্গাইল",
+        "upozila": "ঘাটাইল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/06bb40f9e476f2ea58f6b1cd893a3ad1.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 435,
+    "today_success": 346,
+    "today_cost": 5190,
+    "total_success": 3977,
+    "total_bill": 59655,
+    "speed": "1.866s"
+  }
+}
