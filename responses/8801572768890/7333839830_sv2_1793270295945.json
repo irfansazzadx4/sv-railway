@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোহাম্মদ শহীদুল আলম চৌধুরী",
+      "nameEn": "Mohammed Shahedul Alam Chowdhury",
+      "gender": "male",
+      "father": "মোহাম্মদ সামশুল আলম চৌধুরী",
+      "mother": "মোছম্মত শাহজাহান বেগম",
+      "nationalId": "7333839830",
+      "pin": "19641595708000020",
+      "oldNid": "1595708000020",
+      "voter_no": "151635002173",
+      "voter_area_code": "151635",
+      "sl_no": "5710",
+      "voterArea": "শুলকবহর ১ম অংশ (151635)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "চট্টগ্রাম",
+      "dateOfBirth": "1964-03-15",
+      "birthDay": "রবিবার",
+      "age": "৬২ বছর ৭ মাস ১৪ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ৫২৬ মাছুমা ভিলা, গ্রাম/রাস্তাঃ শুলকবহর ১ম অংশ, মৌজা/মহল্লাঃ জলী শাহ রোড, শুলকবহর, ওয়ার্ড নংঃ ০৮, ইউনিয়ন/পৌরসভাঃ চট্টগ্রাম সিটি কর্পোরেশন, থানাঃ পাঁচলাইশ, ডাকঘরঃ চকবাজার - ৪২০৩, উপজেলাঃ পাঁচলাইশ, জেলাঃ চট্টগ্রাম, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ৫২৬ মাছুমা ভিলা, গ্রাম/রাস্তাঃ শুলকবহর ১ম অংশ, মৌজা/মহল্লাঃ জলী শাহ রোড, শুলকবহর, ওয়ার্ড নংঃ ০৮, ইউনিয়ন/পৌরসভাঃ চট্টগ্রাম সিটি কর্পোরেশন, থানাঃ পাঁচলাইশ, ডাকঘরঃ চকবাজার - ৪২০৩, উপজেলাঃ পাঁচলাইশ, জেলাঃ চট্টগ্রাম, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চট্টগ্রাম",
+        "upozila": "পাঁচলাইশ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চট্টগ্রাম",
+        "upozila": "পাঁচলাইশ",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/4cde3df0f13167733304a9938f5090a2.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1051,
+    "today_success": 819,
+    "today_cost": 12285,
+    "total_success": 4450,
+    "total_bill": 66750,
+    "speed": "4.986s"
+  }
+}
