@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "শ্রী নিখিল কুমার দাস জাম্বু",
+      "nameEn": "SREE NEKHIL KUMAR DAS JAMBU",
+      "gender": "male",
+      "father": "শ্রী সদা চন্দ্র দাস",
+      "mother": "শ্রীমতি চলোরানী",
+      "nationalId": "6903278015",
+      "pin": "19944919416000374",
+      "oldNid": "4919416000374",
+      "voter_no": "490886000468",
+      "voter_area_code": "490886",
+      "sl_no": "1000",
+      "voterArea": "সাদুয়া দামার হাট (490886)",
+      "occupation": "ব্যবসা",
+      "bloodGroup": "",
+      "birthPlace": "কুড়িগ্রাম",
+      "dateOfBirth": "1994-01-20",
+      "birthDay": "বৃহস্পতিবার",
+      "age": "৩২ বছর ৯ মাস ৯ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ., গ্রাম/রাস্তাঃ সাদুয়া দামার হাট, মৌজা/মহল্লাঃ সাদুয়া দামারহাট, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ উলিপুর পৌরসভা, থানাঃ উলিপুর, ডাকঘরঃ হাজীর হাট - ৫৬২০, উপজেলাঃ উলিপুর, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ., গ্রাম/রাস্তাঃ সাদুয়া দামার হাট, মৌজা/মহল্লাঃ সাদুয়া দামারহাট, ওয়ার্ড নংঃ ৪, ইউনিয়ন/পৌরসভাঃ উলিপুর পৌরসভা, থানাঃ উলিপুর, ডাকঘরঃ হাজীর হাট - ৫৬২০, উপজেলাঃ উলিপুর, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "উলিপুর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "উলিপুর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/33b3c1a2ca11f894f5277c1253076409.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 335,
+    "today_success": 265,
+    "today_cost": 3975,
+    "total_success": 3896,
+    "total_bill": 58440,
+    "speed": "2.09s"
+  }
+}
