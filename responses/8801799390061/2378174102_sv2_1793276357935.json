@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ তাফাজ্জল হুসাইন",
+      "nameEn": "Md. Tafazzal Hossain",
+      "gender": "male",
+      "father": "মিরাজ আলী শেখ",
+      "mother": "মোসাঃ রেজিয়া খাতুন",
+      "nationalId": "2378174102",
+      "pin": "19842699220320194",
+      "oldNid": "2699220320194",
+      "voter_no": "261114320194",
+      "voter_area_code": "261114",
+      "sl_no": "75",
+      "voterArea": "মহাখালী রসুলবাগ (পশ্চিম অংশ) (261114)",
+      "occupation": "ছাত্র/ছাত্রী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1984-10-10",
+      "birthDay": "বুধবার",
+      "age": "৪২ বছর ০ মাস ১৯ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ১২৭ম মহাখালী রেল গেইট মাদ্রাসা, গ্রাম/রাস্তাঃ মহাখালী রসুলবাগ (পশ্চিম অংশ), মৌজা/মহল্লাঃ শহীদ তাজউদ্দিন স্বরণী, রসুলবাগ পশ্চিম, ওয়ার্ড নংঃ ২০, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ তেজগাঁও শিল্প এলাকা, ডাকঘরঃ মহাখালী - ১২০৮, উপজেলাঃ তেজগাঁও শিল্প এলাকা, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ১২৭ম মহাখালী রেল গেইট মাদ্রাসা, গ্রাম/রাস্তাঃ মহাখালী রসুলবাগ (পশ্চিম অংশ), মৌজা/মহল্লাঃ শহীদ তাজউদ্দিন স্বরণী, রসুলবাগ পশ্চিম, ওয়ার্ড নংঃ ২০, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ তেজগাঁও শিল্প এলাকা, ডাকঘরঃ মহাখালী - ১২০৮, উপজেলাঃ তেজগাঁও শিল্প এলাকা, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "তেজগাঁও শিল্প এলাকা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "তেজগাঁও শিল্প এলাকা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/054aae6d305cfcae2964fc290b0fb98e.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1206,
+    "today_success": 932,
+    "today_cost": 13980,
+    "total_success": 4563,
+    "total_bill": 68445,
+    "speed": "2.919s"
+  }
+}
