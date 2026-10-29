@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "উম্মেল খাইর",
+      "nameEn": "Ummel Khyer",
+      "gender": "female",
+      "father": "ছিদ্দিক আহমদ",
+      "mother": "আমেনা খাতুন",
+      "nationalId": "9140724544",
+      "pin": "19821510875413090",
+      "oldNid": "1510875413090",
+      "voter_no": "152635413090",
+      "voter_area_code": "152635",
+      "sl_no": "52",
+      "voterArea": "বৈলগাঁও (১ নং ওয়ার্ড অংশ) (152635)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "চট্টগ্রাম",
+      "dateOfBirth": "1982-08-08",
+      "birthDay": "রবিবার",
+      "age": "৪৪ বছর ২ মাস ২১ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ পূর্ব বৈলগাঁও, গ্রাম/রাস্তাঃ বৈলগাঁও (১ নং ওয়ার্ড অংশ), মৌজা/মহল্লাঃ বনরপা, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ বাঁশখালী পৌরসভা, থানাঃ বাঁশখালী, ডাকঘরঃ বাণীগ্রাম - ৪৩৯৩, উপজেলাঃ বাঁশখালী, জেলাঃ চট্টগ্রাম, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ পূর্ব বৈলগাঁও, গ্রাম/রাস্তাঃ বৈলগাঁও (১ নং ওয়ার্ড অংশ), মৌজা/মহল্লাঃ বনরপা, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ বাঁশখালী পৌরসভা, থানাঃ বাঁশখালী, ডাকঘরঃ বাণীগ্রাম - ৪৩৯৩, উপজেলাঃ বাঁশখালী, জেলাঃ চট্টগ্রাম, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চট্টগ্রাম",
+        "upozila": "বাঁশখালী",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "চট্টগ্রাম",
+        "upozila": "বাঁশখালী",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/e244ed183364f9076cebf23632105144.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 173,
+    "today_success": 140,
+    "today_cost": 2100,
+    "total_success": 3771,
+    "total_bill": 56565,
+    "speed": "4.06s"
+  }
+}
