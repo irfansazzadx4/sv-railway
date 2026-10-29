@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "খাদিজা",
+      "nameEn": "Khadiza",
+      "gender": "",
+      "father": "আ:কাদের শেখ",
+      "mother": "সকিনা বেগম",
+      "nationalId": "7300680241",
+      "pin": "19754798517236973",
+      "oldNid": "4798517236973",
+      "voter_no": "470138236973",
+      "voter_area_code": "470138",
+      "sl_no": 428,
+      "voterArea": "বয়রা ক্রস রোড-১ (470138)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "খুলনা",
+      "dateOfBirth": "1975-12-10",
+      "birthDay": "বুধবার",
+      "age": "৫০ বছর ১০ মাস ১৯ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ শাহীনের ভাড়াটিয়া, গ্রাম/রাস্তাঃ ১নং বয়রা ক্রস রোড, মৌজা/মহল্লাঃ বয়রা ক্রস রোড-১, ওয়ার্ড নংঃ ১৭, ইউনিয়ন/পৌরসভাঃ খুলনা সিটি কর্পোরেশন, থানাঃ সোনাডাঙ্গা, উপজেলাঃ সোনাডাঙ্গা, জেলাঃ খুলনা, বিভাগঃ খুলনা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ শাহীনের ভাড়াটিয়া, গ্রাম/রাস্তাঃ ১নং বয়রা ক্রস রোড, মৌজা/মহল্লাঃ বয়রা ক্রস রোড-১, ওয়ার্ড নংঃ ১৭, ইউনিয়ন/পৌরসভাঃ খুলনা সিটি কর্পোরেশন, থানাঃ সোনাডাঙ্গা, উপজেলাঃ সোনাডাঙ্গা, জেলাঃ খুলনা, বিভাগঃ খুলনা",
+      "permanentAddr": {
+        "division": "খুলনা",
+        "district": "খুলনা",
+        "upozila": "সোনাডাঙ্গা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "খুলনা",
+        "district": "খুলনা",
+        "upozila": "সোনাডাঙ্গা",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/5a6847355b0cb700e03eb889bc401290.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 177,
+    "today_success": 142,
+    "today_cost": 2130,
+    "total_success": 3773,
+    "total_bill": 56595,
+    "speed": "4.72s"
+  }
+}
