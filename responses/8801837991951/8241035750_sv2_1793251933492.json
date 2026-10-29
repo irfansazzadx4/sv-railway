@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ রফিকুল ইসলাম",
+      "nameEn": "MD. RAFIQUL ISLAM",
+      "gender": "male",
+      "father": "মোঃ আবু বকর ছিদ্দিক",
+      "mother": "রিনা রহমান",
+      "nationalId": "8241035750",
+      "pin": "19940611042000250",
+      "oldNid": "0611042000250",
+      "voter_no": "060908000466",
+      "voter_area_code": "060908",
+      "sl_no": "975",
+      "voterArea": "চাখার (060908)",
+      "occupation": "ছাত্র/ছাত্রী",
+      "bloodGroup": "",
+      "birthPlace": "বরিশাল",
+      "dateOfBirth": "1994-12-13",
+      "birthDay": "মঙ্গলবার",
+      "age": "৩১ বছর ১০ মাস ১৬ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ চাখার, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ৭, ইউনিয়ন/পৌরসভাঃ বানারী পাড়া পৌরসভা, থানাঃ বানারী পাড়া, ডাকঘরঃ চাখার - ৮৫৩১, উপজেলাঃ বানারী পাড়া, জেলাঃ বরিশাল, বিভাগঃ বরিশাল",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ চাখার, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ৭, ইউনিয়ন/পৌরসভাঃ বানারী পাড়া পৌরসভা, থানাঃ বানারী পাড়া, ডাকঘরঃ চাখার - ৮৫৩১, উপজেলাঃ বানারী পাড়া, জেলাঃ বরিশাল, বিভাগঃ বরিশাল",
+      "permanentAddr": {
+        "division": "বরিশাল",
+        "district": "বরিশাল",
+        "upozila": "বানারী পাড়া",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "বরিশাল",
+        "district": "বরিশাল",
+        "upozila": "বানারী পাড়া",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/4dbe13434d10c397c4ab98de57ae00a3.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 313,
+    "today_success": 247,
+    "today_cost": 3705,
+    "total_success": 3878,
+    "total_bill": 58170,
+    "speed": "1.718s"
+  }
+}
