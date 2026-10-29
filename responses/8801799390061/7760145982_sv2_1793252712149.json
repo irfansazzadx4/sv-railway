@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মমতাজ",
+      "nameEn": "MOMOTAZ",
+      "gender": "female",
+      "father": "ইব্রাহীম",
+      "mother": "মনোয়ারা খাতুন",
+      "nationalId": "7760145982",
+      "pin": "19863323007203689",
+      "oldNid": "3323007203689",
+      "voter_no": "330650203689",
+      "voter_area_code": "330650",
+      "sl_no": "2551",
+      "voterArea": "চান্দনা অংশ (330650)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "গাজীপুর",
+      "dateOfBirth": "1986-09-18",
+      "birthDay": "বৃহস্পতিবার",
+      "age": "৪০ বছর ১ মাস ১১ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ১০০, গ্রাম/রাস্তাঃ চান্দনা অংশ, মৌজা/মহল্লাঃ পূর্ব চান্দনা, চান্দনা, ওয়ার্ড নংঃ ২৭, ইউনিয়ন/পৌরসভাঃ গাজীপুর সিটি কর্পোরেশন, থানাঃ গাজীপুর সদর, ডাকঘরঃ ব্রি - ১৭০১, উপজেলাঃ গাজীপুর সদর, জেলাঃ গাজীপুর, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ১০০, গ্রাম/রাস্তাঃ চান্দনা অংশ, মৌজা/মহল্লাঃ পূর্ব চান্দনা, চান্দনা, ওয়ার্ড নংঃ ২৭, ইউনিয়ন/পৌরসভাঃ গাজীপুর সিটি কর্পোরেশন, থানাঃ গাজীপুর সদর, ডাকঘরঃ ব্রি - ১৭০১, উপজেলাঃ গাজীপুর সদর, জেলাঃ গাজীপুর, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "গাজীপুর",
+        "upozila": "গাজীপুর সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "গাজীপুর",
+        "upozila": "গাজীপুর সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/d6c94ab580ed7fe928baa53dde2c6bba.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 363,
+    "today_success": 280,
+    "today_cost": 4200,
+    "total_success": 3911,
+    "total_bill": 58665,
+    "speed": "2.325s"
+  }
+}
