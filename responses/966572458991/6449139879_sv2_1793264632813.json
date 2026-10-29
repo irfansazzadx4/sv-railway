@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ আব্দুর রাজ্জাক",
+      "nameEn": "Md Abdur Razzak",
+      "gender": "",
+      "father": "মোঃ মোজাম্মেল হক",
+      "mother": "মোছাঃ রহিমা বেগম",
+      "nationalId": "6449139879",
+      "pin": "19894916188000032",
+      "oldNid": "4916188000032",
+      "voter_no": "490126000024",
+      "voter_area_code": "490126",
+      "sl_no": 509,
+      "voterArea": "আজমাতা(পশ্চিম) (490126)",
+      "occupation": "কৃষক",
+      "bloodGroup": "",
+      "birthPlace": "কুড়িগ্রাম",
+      "dateOfBirth": "1989-03-12",
+      "birthDay": "রবিবার",
+      "age": "৩৭ বছর ৭ মাস ১৭ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ নারীরভিটা, গ্রাম/রাস্তাঃ আজমাতা, মৌজা/মহল্লাঃ আজমাতা(পশ্চিম), ওয়ার্ড নংঃ ৫, ইউনিয়ন/পৌরসভাঃ রামখানা, থানাঃ নাগেশ্বরী, উপজেলাঃ নাগেশ্বরী, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddress": "বাসা/হোল্ডিংঃ নারীরভিটা, গ্রাম/রাস্তাঃ আজমাতা, মৌজা/মহল্লাঃ আজমাতা(পশ্চিম), ওয়ার্ড নংঃ ৫, ইউনিয়ন/পৌরসভাঃ রামখানা, থানাঃ নাগেশ্বরী, উপজেলাঃ নাগেশ্বরী, জেলাঃ কুড়িগ্রাম, বিভাগঃ রংপুর",
+      "permanentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "নাগেশ্বরী",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "রংপুর",
+        "district": "কুড়িগ্রাম",
+        "upozila": "নাগেশ্বরী",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/05ec1bee004821c024a51cd890800b75.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 919,
+    "today_success": 721,
+    "today_cost": 10815,
+    "total_success": 4352,
+    "total_bill": 65280,
+    "speed": "8.95s"
+  }
+}
