@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মিনু বেগম",
+      "nameEn": "Mino Begum",
+      "gender": "female",
+      "father": "আক্রাম আলী",
+      "mother": "জাবেদা খাতুন",
+      "nationalId": "4629138332",
+      "pin": "19761917252620778",
+      "oldNid": "1917252620778",
+      "voter_no": "190103620778",
+      "voter_area_code": "190103",
+      "sl_no": "339",
+      "voterArea": "যুগিপাড়া (190103)",
+      "occupation": "শ্রমিক",
+      "bloodGroup": "",
+      "birthPlace": "কুমিল্লা",
+      "dateOfBirth": "1976-07-18",
+      "birthDay": "রবিবার",
+      "age": "৫০ বছর ৩ মাস ১১ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ হাজি বাড়ি, গ্রাম/রাস্তাঃ যুগিপাড়া, মৌজা/মহল্লাঃ যোগিপাড়া, ডোমবাড়িয়া, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ লাকসাম পৌরসভা, থানাঃ লাকসাম, ডাকঘরঃ ডোমবাড়ীয়া - ৩৫৭০, উপজেলাঃ লাকসাম, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddress": "বাসা/হোল্ডিংঃ হাজি বাড়ি, গ্রাম/রাস্তাঃ যুগিপাড়া, মৌজা/মহল্লাঃ যোগিপাড়া, ডোমবাড়িয়া, ওয়ার্ড নংঃ ১, ইউনিয়ন/পৌরসভাঃ লাকসাম পৌরসভা, থানাঃ লাকসাম, ডাকঘরঃ ডোমবাড়ীয়া - ৩৫৭০, উপজেলাঃ লাকসাম, জেলাঃ কুমিল্লা, বিভাগঃ চট্টগ্রাম",
+      "permanentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "লাকসাম",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "চট্টগ্রাম",
+        "district": "কুমিল্লা",
+        "upozila": "লাকসাম",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/95a4d1e56f6782a020019a1d488e47dc.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 391,
+    "today_success": 306,
+    "today_cost": 4590,
+    "total_success": 3937,
+    "total_bill": 59055,
+    "speed": "0.9s"
+  }
+}
