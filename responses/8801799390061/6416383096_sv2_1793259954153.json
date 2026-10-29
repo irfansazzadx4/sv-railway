@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোছাঃ মমতাজ বেগম",
+      "nameEn": "MST. MOMOTAZ BEGUM",
+      "gender": "other",
+      "father": "আব্দুল মান্নান",
+      "mother": "মোছাঃ শিরিনা বেগম",
+      "nationalId": "6416383096",
+      "pin": "19876119438158903",
+      "oldNid": "6119438158903",
+      "voter_no": "",
+      "voter_area_code": "",
+      "sl_no": "",
+      "voterArea": "মাগুরজোড়া (০১ নং ওয়ার্ড অংশ) ()",
+      "occupation": "",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1987-03-21",
+      "birthDay": "শনিবার",
+      "age": "৩৯ বছর ৭ মাস ৮ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ মাগুরজোড়া (০১ নং ওয়ার্ড অংশ), মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ মাগুরজোড়া (০১ নং ওয়ার্ড অংশ), মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/b48aeeca83da078aa1119b10c0cf0ce4.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 743,
+    "today_success": 585,
+    "today_cost": 8775,
+    "total_success": 4216,
+    "total_bill": 63240,
+    "speed": "4.745s"
+  }
+}
