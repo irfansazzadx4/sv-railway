@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ আবদুল্লাহ",
+      "nameEn": "MD. ABDULLAH",
+      "gender": "male",
+      "father": "মোঃ আঃ রহমান",
+      "mother": "মোছাঃ ফিরোজা",
+      "nationalId": "1963488901",
+      "pin": "19986119447000489",
+      "oldNid": "6119447000489",
+      "voter_no": "",
+      "voter_area_code": "",
+      "sl_no": "",
+      "voterArea": "বালিদিয়া ()",
+      "occupation": "",
+      "bloodGroup": "",
+      "birthPlace": "ময়মনসিংহ",
+      "dateOfBirth": "1998-07-05",
+      "birthDay": "রবিবার",
+      "age": "২৮ বছর ৩ মাস ২৪ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ বালিদিয়া, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ বালিদিয়া, মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ, ইউনিয়ন/পৌরসভাঃ ত্রিশাল পৌরসভা, থানাঃ ত্রিশাল, ডাকঘরঃ, উপজেলাঃ ত্রিশাল, জেলাঃ ময়মনসিংহ, বিভাগঃ ময়মনসিংহ",
+      "permanentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ময়মনসিংহ",
+        "district": "ময়মনসিংহ",
+        "upozila": "ত্রিশাল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/f0a78b7079d39bcae5728fdd4308b8cb.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1316,
+    "today_success": 1015,
+    "today_cost": 15225,
+    "total_success": 4646,
+    "total_bill": 69690,
+    "speed": "5.918s"
+  }
+}
