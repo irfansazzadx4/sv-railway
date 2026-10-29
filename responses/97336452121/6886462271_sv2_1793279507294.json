@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ ফোরকান",
+      "nameEn": "MD. FORKAN",
+      "gender": "male",
+      "father": "মোঃ দেলোয়ার হোসেন খাঁ",
+      "mother": "মোছাঃ হাছিনা বেগম",
+      "nationalId": "6886462271",
+      "pin": "19922693014000495",
+      "oldNid": "2693014000495",
+      "voter_no": "261068001045",
+      "voter_area_code": "261068",
+      "sl_no": "4724",
+      "voterArea": "পুর্ব কাজীপাড়া (উত্তর) (261068)",
+      "occupation": "ছাত্র/ছাত্রী",
+      "bloodGroup": "",
+      "birthPlace": "ঢাকা",
+      "dateOfBirth": "1992-03-01",
+      "birthDay": "রবিবার",
+      "age": "৩৪ বছর ৭ মাস ২৮ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ১৩০, গ্রাম/রাস্তাঃ পুর্ব কাজীপাড়া (উত্তর), মৌজা/মহল্লাঃ পূর্ব কাজিপাড়া, সেনপাড়া, ওয়ার্ড নংঃ ১৪, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ কাফরুল, ডাকঘরঃ মিরপুর - ১২১৬, উপজেলাঃ কাফরুল, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ১৩০, গ্রাম/রাস্তাঃ পুর্ব কাজীপাড়া (উত্তর), মৌজা/মহল্লাঃ পূর্ব কাজিপাড়া, সেনপাড়া, ওয়ার্ড নংঃ ১৪, ইউনিয়ন/পৌরসভাঃ ঢাকা উত্তর সিটি কর্পোরেশন, থানাঃ কাফরুল, ডাকঘরঃ মিরপুর - ১২১৬, উপজেলাঃ কাফরুল, জেলাঃ ঢাকা, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "কাফরুল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "ঢাকা",
+        "upozila": "কাফরুল",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/8baa420b085dca77c1a80cb2ad7b8483.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 1253,
+    "today_success": 967,
+    "today_cost": 14505,
+    "total_success": 4598,
+    "total_bill": 68970,
+    "speed": "1.879s"
+  }
+}
