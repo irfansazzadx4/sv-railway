@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোসাঃ মিনু",
+      "nameEn": "MST, MINU",
+      "gender": "female",
+      "father": "মোহাম্মদ",
+      "mother": "গোলাপী",
+      "nationalId": "4194397982",
+      "pin": "19773313067584349",
+      "oldNid": "3313067584349",
+      "voter_no": "331299000163",
+      "voter_area_code": "331299",
+      "sl_no": "3",
+      "voterArea": "হাজীপাড়া (331299)",
+      "occupation": "গৃহিনী",
+      "bloodGroup": "",
+      "birthPlace": "গাজীপুর",
+      "dateOfBirth": "1977-05-04",
+      "birthDay": "বুধবার",
+      "age": "৪৯ বছর ৫ মাস ২৬ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ হাজীপাড়া, মৌজা/মহল্লাঃ হাজী পাড়া, ওয়ার্ড নংঃ ৮, ইউনিয়ন/পৌরসভাঃ গাজীপুর সিটি কর্পোরেশন, থানাঃ গাজীপুর সদর, ডাকঘরঃ পিরুজালী - ১৭০৩, উপজেলাঃ গাজীপুর সদর, জেলাঃ গাজীপুর, বিভাগঃ ঢাকা",
+      "permanentAddress": "বাসা/হোল্ডিংঃ, গ্রাম/রাস্তাঃ হাজীপাড়া, মৌজা/মহল্লাঃ হাজী পাড়া, ওয়ার্ড নংঃ ৮, ইউনিয়ন/পৌরসভাঃ গাজীপুর সিটি কর্পোরেশন, থানাঃ গাজীপুর সদর, ডাকঘরঃ পিরুজালী - ১৭০৩, উপজেলাঃ গাজীপুর সদর, জেলাঃ গাজীপুর, বিভাগঃ ঢাকা",
+      "permanentAddr": {
+        "division": "ঢাকা",
+        "district": "গাজীপুর",
+        "upozila": "গাজীপুর সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "ঢাকা",
+        "district": "গাজীপুর",
+        "upozila": "গাজীপুর সদর",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/30c3975f2854ae1d6629b576b38d857f.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 209,
+    "today_success": 144,
+    "today_cost": 2160,
+    "total_success": 4846,
+    "total_bill": 72690,
+    "speed": "1.91s"
+  }
+}
