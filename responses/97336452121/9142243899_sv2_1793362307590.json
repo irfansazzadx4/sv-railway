@@ -1,0 +1,62 @@
+{
+  "status": "success",
+  "source": "api",
+  "data": {
+    "status": 200,
+    "response": "success",
+    "data": {
+      "name": "মোঃ তাজাম্মুল হক",
+      "nameEn": "Md.Tajammul Huq",
+      "gender": "male",
+      "father": "হাজী এছমাইল মুন্সী",
+      "mother": "মোসা: জোবেদা খাতুন",
+      "nationalId": "9142243899",
+      "pin": "19630695101106927",
+      "oldNid": "0695101106927",
+      "voter_no": "790558000433",
+      "voter_area_code": "790558",
+      "sl_no": "619",
+      "voterArea": "তুষখালী (২নং ওয়ার্ডের অংশ) (790558)",
+      "occupation": "বেসরকারী চাকুরী",
+      "bloodGroup": "",
+      "birthPlace": "পিরোজপুর",
+      "dateOfBirth": "1963-01-10",
+      "birthDay": "বৃহস্পতিবার",
+      "age": "৬৩ বছর ৯ মাস ২০ দিন",
+      "presentAddress": "বাসা/হোল্ডিংঃ ৫৩১, গ্রাম/রাস্তাঃ তুষখালী (২নং ওয়ার্ডের অংশ), মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ২, ইউনিয়ন/পৌরসভাঃ মঠবাড়িয়া পৌরসভা, থানাঃ মঠবাড়ীয়া, ডাকঘরঃ তুষখালী - ৮৫৬১, উপজেলাঃ মঠবাড়ীয়া, জেলাঃ পিরোজপুর, বিভাগঃ বরিশাল",
+      "permanentAddress": "বাসা/হোল্ডিংঃ ৫৩১, গ্রাম/রাস্তাঃ তুষখালী (২নং ওয়ার্ডের অংশ), মৌজা/মহল্লাঃ, ওয়ার্ড নংঃ ২, ইউনিয়ন/পৌরসভাঃ মঠবাড়িয়া পৌরসভা, থানাঃ মঠবাড়ীয়া, ডাকঘরঃ তুষখালী - ৮৫৬১, উপজেলাঃ মঠবাড়ীয়া, জেলাঃ পিরোজপুর, বিভাগঃ বরিশাল",
+      "permanentAddr": {
+        "division": "বরিশাল",
+        "district": "পিরোজপুর",
+        "upozila": "মঠবাড়ীয়া",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "presentAddr": {
+        "division": "বরিশাল",
+        "district": "পিরোজপুর",
+        "upozila": "মঠবাড়ীয়া",
+        "postOffice": "",
+        "postalCode": "",
+        "mouzaOrMoholla": "",
+        "villageOrRoad": "",
+        "homeOrHolding": "",
+        "region": ""
+      },
+      "photo": "https://api.server24x.site/unofficial/image/8732798bc604491caa928d8db88c7512.jpg"
+    }
+  },
+  "billing": {
+    "name": "Server24x",
+    "today_hit": 147,
+    "today_success": 103,
+    "today_cost": 1545,
+    "total_success": 4805,
+    "total_bill": 72075,
+    "speed": "2.431s"
+  }
+}
